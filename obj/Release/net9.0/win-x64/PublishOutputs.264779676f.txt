@@ -1,2 +1,0 @@
-D:\Programmes\Scripting Game\The_Prince_Rebellion\The_Prince_Rebellion\bin\Release\net9.0\win-x64\publish\The_Prince_Rebellion.pdb
-D:\Programmes\Scripting Game\The_Prince_Rebellion\The_Prince_Rebellion\bin\Release\net9.0\win-x64\publish\The_Prince_Rebellion.exe
