@@ -110,26 +110,23 @@ namespace AdventureGameWeb.Services
 
             try
             {
-                // Try to find existing record for this username
+                // 1. فحص ما إذا كان اسم المستخدم موجود مسبقاً
                 var queryUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?username=eq.{Uri.EscapeDataString(entry.Username)}";
                 using var getReq = new HttpRequestMessage(HttpMethod.Get, queryUrl);
                 ConfigureHeaders(getReq);
                 var getResp = await _http.SendAsync(getReq);
+
                 if (getResp.IsSuccessStatusCode)
                 {
                     var existing = await getResp.Content.ReadFromJsonAsync<List<LeaderboardEntry>>();
                     if (existing != null && existing.Count > 0)
                     {
-                        // Decide whether this new entry is an improvement
                         var existingEntry = existing[0];
                         var shouldUpdate = false;
-                        // Update if new score is higher
+
                         if (entry.Score > existingEntry.Score) shouldUpdate = true;
-                        // Or if new entry was a victory but existing wasn't
                         if (entry.IsVictory && !existingEntry.IsVictory) shouldUpdate = true;
-                        // Or if achievements increased
                         if (entry.AchievementsCount > existingEntry.AchievementsCount) shouldUpdate = true;
-                        // Or if play time is faster (lower)
                         if (entry.PlayTimeSeconds > 0 && existingEntry.PlayTimeSeconds > 0 && entry.PlayTimeSeconds < existingEntry.PlayTimeSeconds) shouldUpdate = true;
 
                         if (shouldUpdate)
@@ -137,7 +134,6 @@ namespace AdventureGameWeb.Services
                             var patchUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?username=eq.{Uri.EscapeDataString(existingEntry.Username)}";
                             using var patchReq = new HttpRequestMessage(HttpMethod.Patch, patchUrl);
                             ConfigureHeaders(patchReq);
-                            patchReq.Headers.Add("Prefer", "return=representation");
 
                             var mergedScore = Math.Max(existingEntry.Score, entry.Score);
                             var mergedPlayTime = (existingEntry.PlayTimeSeconds > 0 && entry.PlayTimeSeconds > 0) ? Math.Min(existingEntry.PlayTimeSeconds, entry.PlayTimeSeconds) : Math.Max(existingEntry.PlayTimeSeconds, entry.PlayTimeSeconds);
@@ -157,23 +153,40 @@ namespace AdventureGameWeb.Services
 
                             var patchResp = await _http.SendAsync(patchReq);
                             if (patchResp.IsSuccessStatusCode) return true;
-                            // if patch failed, fall through to try insert
                         }
                         else
                         {
-                            // Nothing to improve — consider success
-                            return true;
+                            return true; // لا يوجد تحسين في السكور - تعتبر العملية ناجحة
                         }
                     }
                 }
 
-                // If no existing row, insert a new one
+                // 2. إذا لم يكن المستخدم موجوداً، نضيف سجل جديد (بناء Anonymous Anonymous Object لتجنب إرسال id أو created_at)
                 var requestUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard";
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl);
                 ConfigureHeaders(request);
-                request.Content = JsonContent.Create(entry);
+
+                // 💡 إرسال الحقول المطلوب حفظها فقط وبدون id أو created_at
+                var payload = new
+                {
+                    username = entry.Username,
+                    character_class = entry.CharacterClass,
+                    score = entry.Score,
+                    play_time_seconds = entry.PlayTimeSeconds,
+                    achievements_count = entry.AchievementsCount,
+                    is_victory = entry.IsVictory
+                };
+
+                request.Content = JsonContent.Create(payload);
 
                 var response = await _http.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[Supabase Error] Status: {response.StatusCode}, Details: {errBody}");
+                }
+
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -182,7 +195,6 @@ namespace AdventureGameWeb.Services
                 return false;
             }
         }
-
         // Save locally when Supabase not configured
         public async Task<bool> SaveScoreLocallyAsync(LeaderboardEntry entry)
         {
@@ -302,6 +314,11 @@ namespace AdventureGameWeb.Services
             var bearer = !string.IsNullOrWhiteSpace(UserAccessToken) ? UserAccessToken : SupabaseAnonKey;
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (request.Method == HttpMethod.Post || request.Method == HttpMethod.Patch)
+            {
+                request.Headers.Add("Prefer", "return=minimal");
+            }
         }
 
         private List<LeaderboardEntry> GetMockLeaderboard()
