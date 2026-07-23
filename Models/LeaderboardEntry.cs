@@ -12,7 +12,7 @@ namespace AdventureGameWeb.Models
         public DateTime? CreatedAt { get; set; }
 
         [JsonPropertyName("username")]
-        public string Username { get; set; } = "Anonymous";
+        public string Username { get; set; } = string.Empty;
 
         [JsonPropertyName("character_class")]
         public required string CharacterClass { get; set; }

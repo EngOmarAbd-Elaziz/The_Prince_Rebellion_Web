@@ -2,8 +2,6 @@
 @using AdventureGameWeb.Services
 @inject IGameEngineService GameEngine
 @inject AudioService AudioService
-@inject LocalStorageService LocalStorageService
-@inject PlayerSessionService PlayerSession
 
 <div class="modal-backdrop animate-fade-in" style="padding: 1rem; overflow: hidden;">
     <div class="glass-panel modal-content-card anim-drop-top character-selection-window"
@@ -289,29 +287,12 @@
         }
         catch { }
 
-        // Set the leaderboard username on the engine
-        GameEngine.SetUserName(userName.Trim());
-        // Persist player name locally for auto-fill on next session
-        try { await LocalStorageService.SavePlayerNameAsync(userName.Trim()); } catch { }
-
-        string finalName = string.IsNullOrWhiteSpace(inputName) ? selectedHero : inputName.Trim();
+        var trimmedUserName = userName.Trim();
+        string finalName = string.IsNullOrWhiteSpace(inputName) ? trimmedUserName : inputName.Trim();
         GameEngine.StartGame(finalName, selectedHero);
         if (OnConfirmed.HasDelegate)
         {
             await OnConfirmed.InvokeAsync();
         }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var username = await PlayerSession.GetCurrentUsernameAsync();
-            if (!string.IsNullOrWhiteSpace(username))
-            {
-                userName = username;
-            }
-        }
-        catch { }
     }
 }

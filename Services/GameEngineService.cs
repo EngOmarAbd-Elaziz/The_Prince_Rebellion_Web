@@ -9,7 +9,6 @@ namespace AdventureGameWeb.Services
     public class GameEngineService : IGameEngineService
     {
         private readonly SupabaseLeaderboardService supabaseLeaderboardService;
-        private readonly ScoreService scoreService;
         private readonly Random rng = new Random();
         private readonly AudioService audioService;
         private readonly AchievementService achievementService;
@@ -35,8 +34,6 @@ namespace AdventureGameWeb.Services
         public int PlayerMaxHealth { get; private set; } = 50;
         public int EnemyMaxHealth { get; private set; } = 35;
         public bool IsPaused { get; private set; } = false;
-        public string UserName { get; private set; } = string.Empty;
-
         // Play Time Tracking
         private readonly Stopwatch _playTimer = new Stopwatch();
         public int PlayTimeSeconds => (int)_playTimer.Elapsed.TotalSeconds;
@@ -44,15 +41,14 @@ namespace AdventureGameWeb.Services
         public IReadOnlyList<DialogueMessage> DialogueHistory => dialogueHistory.AsReadOnly();
         public IReadOnlyList<string> BattleLogs => battleLogs.AsReadOnly();
 
-        public GameEngineService(AudioService audioService, AchievementService achievementService, StatsService statsService, SupabaseLeaderboardService supabaseLeaderboardService, ScoreService scoreService)
+        public GameEngineService(AudioService audioService, AchievementService achievementService, StatsService statsService, SupabaseLeaderboardService supabaseLeaderboardService)
         {
             this.audioService = audioService;
             this.achievementService = achievementService;
             this.statsService = statsService;
             this.supabaseLeaderboardService = supabaseLeaderboardService;
-            this.scoreService = scoreService;
 
-            Player = new Player("Prince");
+            Player = new Player(string.Empty);
             InitializeEvents();
         }
 
@@ -140,7 +136,7 @@ namespace AdventureGameWeb.Services
 
         public void StartGame(string playerInputName, string heroType = "Prince")
         {
-            string name = playerInputName.Trim();
+            var name = playerInputName?.Trim() ?? string.Empty;
             Player = new Player(name) { SelectedHero = heroType };
             PlayerMaxHealth = 50;
             RoomNumber = 0;
@@ -540,7 +536,7 @@ namespace AdventureGameWeb.Services
         {
             _playTimer.Stop();
             CurrentPhase = GamePhase.NameInput;
-            Player = new Player("Prince");
+            Player = new Player(string.Empty);
             RoomNumber = 0;
             CurrentEnemy = null;
             CurrentDialogue = null;
@@ -555,11 +551,6 @@ namespace AdventureGameWeb.Services
 
             _ = audioService.PlayTrackAsync("Menu");
             NotifyStateChanged();
-        }
-
-        public void SetUserName(string name)
-        {
-            UserName = string.IsNullOrWhiteSpace(name) ? "Anonymous" : name.Trim();
         }
 
         public int CalculateScore(bool isVictory)
@@ -631,26 +622,23 @@ namespace AdventureGameWeb.Services
             {
                 int finalScore = CalculateScore(isVictory);
 
-                // 1. التأكد من جلب الاسم الذي ادخله المستخدم في الشاشة الرئيسية
-                string actualPlayerName = !string.IsNullOrWhiteSpace(Player?.Name)
-                    ? Player.Name
-                    : (!string.IsNullOrWhiteSpace(UserName) ? UserName : "Anonymous");
+                var actualPlayerName = Player?.Name?.Trim();
+                if (string.IsNullOrWhiteSpace(actualPlayerName))
+                {
+                    return;
+                }
 
                 var leaderboardEntry = new LeaderboardEntry
                 {
-                    Username = actualPlayerName,                     // 👈 هنا الاسم الحقيقي للاعب
-                    CharacterClass = Player?.SelectedHero ?? "Prince", // 👈 هنا شخصية البطل (Prince / Princess)
+                    Username = actualPlayerName,
+                    CharacterClass = Player?.SelectedHero ?? "Prince",
                     Score = finalScore,
                     PlayTimeSeconds = PlayTimeSeconds,
                     AchievementsCount = achievementService.Achievements.Count(a => a.IsUnlocked),
                     IsVictory = isVictory
                 };
 
-                // 2. إرسال البيانات إلى Supabase
                 await supabaseLeaderboardService.SubmitScoreAsync(leaderboardEntry);
-
-                // 3. تحديث السكور محلياً
-                await scoreService.SaveOrUpdateScoreAsync(actualPlayerName, finalScore);
             }
             catch (Exception ex)
             {

@@ -16,9 +16,7 @@ builder.Services.AddScoped<LocalStorageService>();
 builder.Services.AddScoped<AchievementService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<UiStateService>();
-builder.Services.AddScoped<ScoreService>();
 builder.Services.AddScoped<SupabaseLeaderboardService>();
-builder.Services.AddScoped<PlayerSessionService>();
 builder.Services.AddScoped<IGameEngineService, GameEngineService>();
 
 await builder.Build().RunAsync();

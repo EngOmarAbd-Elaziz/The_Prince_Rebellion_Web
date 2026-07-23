@@ -20,7 +20,6 @@ namespace AdventureGameWeb.Engine
         int PlayerMaxHealth { get; }
         int EnemyMaxHealth { get; }
         bool IsPaused { get; }
-        string UserName { get; }
         int PlayTimeSeconds { get; }
         IReadOnlyList<DialogueMessage> DialogueHistory { get; }
         IReadOnlyList<string> BattleLogs { get; }
@@ -37,7 +36,6 @@ namespace AdventureGameWeb.Engine
         void SetPhase(GamePhase phase);
         void PauseGame();
         void ResumeGame();
-        void SetUserName(string name);
         int CalculateScore(bool isVictory);
     }
 }

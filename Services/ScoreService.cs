@@ -83,7 +83,7 @@ namespace AdventureGameWeb.Services
 
         public static UserScore CreateEmptyProfile(string username) => new()
         {
-            Username = string.IsNullOrWhiteSpace(username) ? "Guest" : username.Trim(),
+            Username = string.IsNullOrWhiteSpace(username) ? string.Empty : username.Trim(),
             HighScore = 0,
             LastUpdated = DateTime.MinValue
         };

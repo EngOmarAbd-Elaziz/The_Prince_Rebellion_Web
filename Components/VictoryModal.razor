@@ -4,8 +4,8 @@
 @inject AudioService AudioService
 @inject IJSRuntime JSRuntime
 @inject UiStateService UiState
-@inject ScoreService ScoreService
 @inject AchievementService AchievementService
+@inject SupabaseLeaderboardService SupabaseService
 
 @if (GameEngine.CurrentPhase == GamePhase.Victory)
 {
@@ -46,7 +46,7 @@
                     </span>
                     <span style="display: flex; align-items: center; gap: 0.4rem;">
                         <SvgIcon Name="chain" Size="1rem" Color="var(--color-success)" /> Saved: @(25 -
-                                                                    GameEngine.Player.PrisonersRemaining)
+                                                                                            GameEngine.Player.PrisonersRemaining)
                     </span>
                 </div>
             </div>
@@ -56,14 +56,15 @@
                 <div style="font-size: 0.8rem; color: var(--text-muted);">FINAL SCORE</div>
                 <div class="font-heading" style="font-size: 2.5rem; color: var(--color-warning); font-weight: 900;">
                     @_finalScore</div>
-                    @if (!string.IsNullOrWhiteSpace(GameEngine.UserName))
+                    @if (!string.IsNullOrWhiteSpace(GameEngine.Player?.Name))
                     {
                         <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">Recorded as: <strong
-                            style="color: var(--text-main);">@GameEngine.UserName</strong></div>
-                        }
+                            style="color: var(--text-main);">@GameEngine.Player.Name</strong></div>
+                    }
                         @if (_scoreSubmitted)
                         {
-                            <div style="font-size: 0.78rem; color: var(--color-success); margin-top: 0.3rem;">✓ High score saved to leaderboard</div>
+                            <div style="font-size: 0.78rem; color: var(--color-success); margin-top: 0.3rem;">✓ High score saved to
+                                leaderboard</div>
                             }
                         </div>
 
@@ -111,13 +112,21 @@
         _finalScore += _achievementsCount * 30;
         StateHasChanged();
 
-        var username = GameEngine.UserName?.Trim() ?? string.Empty;
+        var username = GameEngine.Player?.Name?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(username))
         {
             return false;
         }
 
-        var result = await ScoreService.SaveOrUpdateScoreAsync(username, _finalScore);
+        var result = await SupabaseService.SubmitScoreAsync(new LeaderboardEntry
+        {
+            Username = username,
+            CharacterClass = GameEngine.Player?.SelectedHero ?? "Prince",
+            Score = _finalScore,
+            PlayTimeSeconds = GameEngine.PlayTimeSeconds,
+            AchievementsCount = _achievementsCount,
+            IsVictory = true
+        });
         _scoreSubmitted = result;
         StateHasChanged();
         return result;

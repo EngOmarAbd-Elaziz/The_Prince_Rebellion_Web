@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 using AdventureGameWeb.Models;
 
@@ -12,8 +11,6 @@ namespace AdventureGameWeb.Services
     public class SupabaseLeaderboardService
     {
         private readonly HttpClient _http;
-        private readonly LocalStorageService _localStorage;
-        private const string LOCAL_LEADERBOARD_KEY = "pr_local_leaderboard";
 
         // Replace these placeholders with your actual Supabase credentials
         public string SupabaseUrl { get; set; } = "https://bpjiyonvntouocxkycej.supabase.co";
@@ -23,10 +20,9 @@ namespace AdventureGameWeb.Services
         // use the user token for Authorization (required for owner-based RLS).
         public string? UserAccessToken { get; set; }
 
-        public SupabaseLeaderboardService(HttpClient http, LocalStorageService localStorage)
+        public SupabaseLeaderboardService(HttpClient http)
         {
             _http = http;
-            _localStorage = localStorage;
         }
 
         public bool IsConfigured => !string.IsNullOrWhiteSpace(SupabaseUrl) &&
@@ -35,7 +31,7 @@ namespace AdventureGameWeb.Services
 
         public async Task<List<LeaderboardEntry>> GetTopLeaderboardAsync(int limit = 10)
         {
-            if (!IsConfigured) return await LoadLocalLeaderboardAsync(limit);
+            if (!IsConfigured) return new List<LeaderboardEntry>();
 
             try
             {
@@ -64,12 +60,12 @@ namespace AdventureGameWeb.Services
                 Console.WriteLine($"[Supabase Leaderboard] Exception: {ex.Message}");
             }
 
-            return await LoadLocalLeaderboardAsync(limit);
+            return new List<LeaderboardEntry>();
         }
 
         public async Task<bool> SubmitScoreAsync(LeaderboardEntry entry)
         {
-            if (!IsConfigured) return await SaveScoreLocallyAsync(entry);
+            if (!IsConfigured) return false;
 
             try
             {
@@ -138,79 +134,13 @@ namespace AdventureGameWeb.Services
                 Console.WriteLine($"[Supabase Submit Exception] {ex.Message}");
                 return false;
             }
-        }        // Save locally when Supabase not configured
-        public async Task<bool> SaveScoreLocallyAsync(LeaderboardEntry entry)
-        {
-            try
-            {
-                var json = await _localStorage.GetItemAsync(LOCAL_LEADERBOARD_KEY);
-                List<LeaderboardEntry> list = new();
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    var existing = JsonSerializer.Deserialize<List<LeaderboardEntry>>(json);
-                    if (existing != null) list = existing;
-                }
-
-                // Merge/update by username
-                var idx = list.FindIndex(e => string.Equals(e.Username, entry.Username, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0)
-                {
-                    list[idx] = MergeEntries(list[idx], entry);
-                }
-                else
-                {
-                    // assign temporary id
-                    entry.Id = (list.Count > 0) ? list[list.Count - 1].Id + 1 : 1000;
-                    list.Add(entry);
-                }
-
-                var outJson = JsonSerializer.Serialize(list);
-                await _localStorage.SetItemAsync(LOCAL_LEADERBOARD_KEY, outJson);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SupabaseLeaderboard] Error saving local score: {ex.Message}");
-                return false;
-            }
-        }
-
-        private LeaderboardEntry MergeEntries(LeaderboardEntry? existing, LeaderboardEntry incoming)
-        {
-            if (existing == null) return incoming;
-            return new LeaderboardEntry
-            {
-                Id = existing.Id,
-                Username = existing.Username ?? incoming.Username,
-                CharacterClass = string.IsNullOrWhiteSpace(existing.CharacterClass) ? incoming.CharacterClass : existing.CharacterClass,
-                Score = Math.Max(existing.Score, incoming.Score),
-                PlayTimeSeconds = (existing.PlayTimeSeconds > 0 && incoming.PlayTimeSeconds > 0) ? Math.Min(existing.PlayTimeSeconds, incoming.PlayTimeSeconds) : Math.Max(existing.PlayTimeSeconds, incoming.PlayTimeSeconds),
-                AchievementsCount = Math.Max(existing.AchievementsCount, incoming.AchievementsCount),
-                IsVictory = existing.IsVictory || incoming.IsVictory
-            };
         }
 
         public async Task<LeaderboardEntry?> GetEntryByUsernameAsync(string username)
         {
             if (string.IsNullOrWhiteSpace(username)) return null;
 
-            if (!IsConfigured)
-            {
-                try
-                {
-                    var json = await _localStorage.GetItemAsync(LOCAL_LEADERBOARD_KEY);
-                    if (!string.IsNullOrWhiteSpace(json))
-                    {
-                        var list = JsonSerializer.Deserialize<List<LeaderboardEntry>>(json);
-                        if (list != null)
-                        {
-                            return list.Find(e => string.Equals(e.Username, username, StringComparison.OrdinalIgnoreCase));
-                        }
-                    }
-                }
-                catch { }
-                return null;
-            }
+            if (!IsConfigured) return null;
 
             try
             {
@@ -225,27 +155,7 @@ namespace AdventureGameWeb.Services
                 }
             }
             catch { }
-            var localFallback = await LoadLocalLeaderboardAsync();
-            return localFallback.Find(e => string.Equals(e.Username, username, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private async Task<List<LeaderboardEntry>> LoadLocalLeaderboardAsync(int limit = int.MaxValue)
-        {
-            try
-            {
-                var json = await _localStorage.GetItemAsync(LOCAL_LEADERBOARD_KEY);
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    var list = JsonSerializer.Deserialize<List<LeaderboardEntry>>(json);
-                    if (list != null)
-                    {
-                        list.Sort((a, b) => b.Score.CompareTo(a.Score));
-                        return list.GetRange(0, Math.Min(limit, list.Count));
-                    }
-                }
-            }
-            catch { }
-            return new List<LeaderboardEntry>();
+            return null;
         }
 
         private void ConfigureHeaders(HttpRequestMessage request)
