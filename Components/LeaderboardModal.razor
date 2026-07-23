@@ -181,12 +181,12 @@
 
         try
         {
-            _currentUsername = await PlayerSession.GetCurrentUsernameAsync();
+            // 1. جلب اسم المستخدم الحالي المباشر من الجلسة الحالية
+            _currentUsername = (await PlayerSession.GetCurrentUsernameAsync())?.Trim() ?? string.Empty;
 
-            // 1. جلب البيانات العالمية من Supabase (أعلى 10 لاعبين)
+            // 2. جلب البيانات العالمية (أعلى 10) من Supabase
             var globalEntries = await SupabaseService.GetTopLeaderboardAsync(10);
 
-            // 2. تحويل البيانات للعرض
             _entries = globalEntries.Select(e => new UserScore
             {
                 Username = e.Username,
@@ -194,10 +194,10 @@
                 LastUpdated = e.CreatedAt.GetValueOrDefault(DateTime.MinValue)
             }).ToList();
 
-            // 3. تحديث بروفايل اللاعب بناءً على بيانات Supabase وليست المحلية فقط
+            // 3. تحديث بيانات البروفايل بناءً على الاسم الجديد الحاضر
             if (!string.IsNullOrWhiteSpace(_currentUsername))
             {
-                // البحث عن اللاعب في القائمة العالمية
+                // فحص هل الاسم الجديد موجود في الـ Top 10 العالمية؟
                 var myGlobalEntry = _entries.FirstOrDefault(e =>
                     string.Equals(e.Username, _currentUsername, StringComparison.OrdinalIgnoreCase));
 
@@ -206,7 +206,7 @@
 
                 if (myGlobalEntry != null)
                 {
-                    // إذا كان اللاعب في الـ Top 10 نعرض بياناته الحقيقية من Supabase
+                    // إذا كان موجوداً في الـ Top 10
                     _playerProfile = new UserScore
                     {
                         Username = myGlobalEntry.Username,
@@ -217,7 +217,7 @@
                 }
                 else
                 {
-                    // إذا لم يكن في الـ Top 10، نحاول جلب أعلى سكور له من Supabase أو الـ LocalStorage كـ Fallback
+                    // إذا كان اسماً جديداً أو سكوره خارج الـ Top 10
                     var supabaseUserEntry = await SupabaseService.GetEntryByUsernameAsync(_currentUsername);
                     if (supabaseUserEntry != null)
                     {
@@ -230,8 +230,8 @@
                     }
                     else
                     {
-                        var profile = await PlayerSession.GetCurrentPlayerScoreAsync();
-                        _playerProfile = profile ?? ScoreService.CreateEmptyProfile(_currentUsername);
+                        // بروفايل جديد تماماً (Fresh Profile)
+                        _playerProfile = ScoreService.CreateEmptyProfile(_currentUsername);
                     }
                 }
             }
@@ -266,7 +266,7 @@
 
     private bool IsCurrentPlayer(UserScore entry) =>
         !string.IsNullOrWhiteSpace(_currentUsername) &&
-        string.Equals(entry.Username, _currentUsername, StringComparison.OrdinalIgnoreCase);
+        string.Equals(entry.Username?.Trim(), _currentUsername.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static string GetRankIcon(int rank) =>
         rank switch { 1 => "🥇", 2 => "🥈", 3 => "🥉", _ => $"{rank}." };
@@ -283,4 +283,6 @@
 
         return lastUpdated.ToLocalTime().ToString("MMM dd, yyyy HH:mm");
     }
+
+
 }
