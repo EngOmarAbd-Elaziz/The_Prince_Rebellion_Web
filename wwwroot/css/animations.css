@@ -1,0 +1,309 @@
+/* Keyframe Animations & Visual Effects for The Prince's Rebellion */
+
+/* Logo Final Shine Flash for Cinematic Loading 100% Completion */
+@keyframes logoShineFlash {
+    0% {
+        filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.4));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 50px rgba(250, 204, 21, 0.95)) brightness(1.35);
+        transform: scale(1.06);
+    }
+    100% {
+        filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.7));
+        transform: scale(1);
+    }
+}
+.logo-final-shine {
+    animation: logoShineFlash 0.8s ease-in-out forwards;
+}
+
+/* Cinematic loader — percentage bump & completion flash */
+@keyframes loaderPctBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+}
+
+.loader-pct-bump {
+    animation: loaderPctBump 0.35s ease-out;
+}
+
+@keyframes loaderCompleteFlash {
+    0% { filter: brightness(1); }
+    35% { filter: brightness(1.15); }
+    100% { filter: brightness(1); }
+}
+
+.cinematic-loader-container.loader-complete-flash {
+    animation: loaderCompleteFlash 0.6s ease-out;
+}
+
+.tip-body-text {
+    transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.tip-body-text.tip-fade-out {
+    opacity: 0;
+    transform: translateY(4px);
+}
+
+@keyframes loaderEllipsis {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+.loader-ellipsis::after {
+    content: '';
+    animation: loaderEllipsisDots 1.4s steps(4, end) infinite;
+}
+
+@keyframes loaderEllipsisDots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75%, 100% { content: '...'; }
+}
+
+@keyframes barShimmer {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(220%); }
+}
+
+@keyframes ringGlowPulse {
+    0%, 100% { opacity: 0.45; transform: scale(0.92); }
+    50% { opacity: 0.95; transform: scale(1.05); }
+}
+
+@keyframes orbitSpin {
+    0% { transform: rotate(0deg) translateX(46px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(46px) rotate(-360deg); }
+}
+
+@keyframes emberFloat {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.4);
+    }
+    15% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(-30px + var(--drift, 0px)), -120px) scale(0.1);
+    }
+}
+
+@keyframes scanlineDrift {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+/* Directional Menu Entrances */
+
+/* Inventory - Slide from Left */
+@keyframes slideFromLeft {
+    0% {
+        transform: translateX(-100%) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+.anim-slide-left {
+    animation: slideFromLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Journal - Slide from Right */
+@keyframes slideFromRight {
+    0% {
+        transform: translateX(100%) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+.anim-slide-right {
+    animation: slideFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Settings - Drop from Top */
+@keyframes dropFromTop {
+    0% {
+        transform: translateY(-100%) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+.anim-drop-top {
+    animation: dropFromTop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Achievements - Rise from Bottom */
+@keyframes riseFromBottom {
+    0% {
+        transform: translateY(100%) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+.anim-rise-bottom {
+    animation: riseFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Bestiary & Codex - Grimoire Book Scale */
+@keyframes grimoireScale {
+    0% {
+        transform: scale(0.7) rotate(-3deg);
+        opacity: 0;
+        filter: blur(15px);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+}
+.anim-grimoire {
+    animation: grimoireScale 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Game Paused Indicator Pulse */
+@keyframes pulsePause {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+        border-color: rgba(250, 204, 21, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(250, 204, 21, 0.8);
+        border-color: #FACC15;
+        transform: scale(1.04);
+    }
+}
+.pause-banner {
+    animation: pulsePause 2s infinite ease-in-out;
+}
+
+/* Screen Shake Effect */
+@keyframes screenShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    15% { transform: translate(-12px, 8px) rotate(-1deg); }
+    30% { transform: translate(12px, -6px) rotate(1deg); }
+    45% { transform: translate(-8px, -8px) rotate(-0.5deg); }
+    60% { transform: translate(8px, 6px) rotate(0.5deg); }
+    75% { transform: translate(-4px, 2px) rotate(0deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.shake-effect {
+    animation: screenShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Floating Damage Text Popup */
+@keyframes damagePopup {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.6);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(-20px) scale(1.3);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-40px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.8);
+    }
+}
+
+.floating-damage {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #EF4444;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 4px 8px #000;
+    pointer-events: none;
+    animation: damagePopup 1.2s ease-out forwards;
+    z-index: 50;
+}
+
+/* Portal Transition Fade & Camera Zoom */
+@keyframes portalFade {
+    0% { opacity: 0; filter: blur(20px) scale(1.1); }
+    100% { opacity: 1; filter: blur(0px) scale(1); }
+}
+
+.portal-transition {
+    animation: portalFade 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Achievement Toast Notification Slide In */
+@keyframes toastSlideIn {
+    0% {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+    15% {
+        transform: translateX(0) scale(1.05);
+        opacity: 1;
+    }
+    25% {
+        transform: translateX(0) scale(1);
+    }
+    85% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+}
+
+.toast-achievement {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid var(--color-warning);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 10px 30px rgba(250, 204, 21, 0.3), 0 0 15px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
+    animation: toastSlideIn 4.5s ease-in-out forwards;
+}
+
+/* Scrolling Credits Keyframes */
+@keyframes creditsScroll {
+    0% { transform: translateY(60vh); }
+    100% { transform: translateY(-120%); }
+}
+
+.credits-roll {
+    animation: creditsScroll 50s linear forwards;
+}

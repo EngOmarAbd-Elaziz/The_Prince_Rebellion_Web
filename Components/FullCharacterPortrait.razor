@@ -1,0 +1,169 @@
+@using AdventureGameWeb.Engine
+@inject IGameEngineService GameEngine
+
+@code {
+    [Parameter] public string CharacterName { get; set; } = string.Empty;
+    [Parameter] public string Expression { get; set; } = "Neutral";
+    [Parameter] public string Position { get; set; } = "Left"; // Left or Right
+    [Parameter] public bool IsActiveSpeaker { get; set; } = true;
+}
+
+<div
+    class="vn-portrait-frame position-@Position.ToLower() @(IsActiveSpeaker ? "active-speaker" : "inactive-speaker") animate-portrait-slide">
+    <div class="portrait-image-wrapper">
+        @if (CharacterName == "Prince" || CharacterName == "The Prince" || CharacterName == "Princess" || CharacterName
+        == "The Princess" || CharacterName == GameEngine.Player?.Name)
+        {
+            @if (GameEngine.Player?.SelectedHero == "Princess" || CharacterName == "Princess")
+            {
+                <img src="images/princess.png" alt="Princess" class="vn-character-img animate-portrait-breath" />
+            }
+            else
+            {
+                <img src="images/prince.png" alt="Prince" class="vn-character-img animate-portrait-breath" />
+            }
+        }
+        else if (CharacterName == "Queen")
+        {
+            <img src="images/queen.png" alt="Queen" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Jack")
+        {
+            <img src="images/jack.png" alt="Jack" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "The King" || CharacterName == "King")
+        {
+            <img src="images/king.png" alt="The King" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "The Seller" || CharacterName == "Seller")
+        {
+            <img src="images/seller.png" alt="Seller" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Ash")
+        {
+            <img src="images/ash.png" alt="Ash" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Loge")
+        {
+            <img src="images/loge.png" alt="Loge" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Tom")
+        {
+            <img src="images/tom.png" alt="Tom" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "King's assistant" || CharacterName == "Assistant")
+        {
+            <img src="images/assistant.png" alt="Assistant" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Ship Captain" || CharacterName == "Captain")
+        {
+            <img src="images/captain.png" alt="Captain" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Guard" || CharacterName == "Royal Guard" || CharacterName == "Enforcer")
+        {
+            <img src="images/guard.png" alt="Guard" class="vn-character-img animate-portrait-breath" />
+        }
+        else if (CharacterName == "Wild Animal" || CharacterName == "Panther" || CharacterName == "Beast" ||
+        CharacterName == "Hound")
+        {
+            <img src="images/beast.png" alt="Beast" class="vn-character-img animate-portrait-breath" />
+        }
+        else
+        {
+            <!-- Fallback character artwork -->
+            <img src="images/guard.png" alt="Character" class="vn-character-img animate-portrait-breath" />
+        }
+    </div>
+</div>
+
+<style>
+    .vn-portrait-frame {
+        position: absolute;
+        bottom: clamp(100px, 20vh, 180px);
+        z-index: 4500;
+        width: 340px;
+        height: 520px;
+        max-height: 72vh;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
+
+    .position-left {
+        left: 2vw;
+    }
+
+    .position-right {
+        right: 2vw;
+    }
+
+    .position-center {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .portrait-image-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .vn-character-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.7));
+        transition: all 0.4s ease;
+    }
+
+    /* Idle Breathing & Subtle Float Motion Keyframe */
+    @@keyframes portraitBreath {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-6px);
+        }
+    }
+
+    .animate-portrait-breath {
+        animation: portraitBreath 4s ease-in-out infinite;
+    }
+
+    /* Active Speaker Highlighting */
+    .active-speaker {
+        opacity: 1;
+        transform: scale(1.03) translateY(0);
+        z-index: 4600;
+    }
+
+    .active-speaker .vn-character-img {
+        filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.4)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Inactive Speaker Dimming */
+    .inactive-speaker {
+        opacity: 0.55;
+        transform: scale(0.94) translateY(18px);
+        z-index: 4400;
+    }
+
+    .inactive-speaker .vn-character-img {
+        filter: grayscale(0.5) brightness(0.5);
+    }
+
+    @@media (max-width: 768px) {
+        .vn-portrait-frame {
+            width: min(42vw, 200px);
+            height: min(44vh, 300px);
+        }
+    }
+</style>

@@ -1,0 +1,144 @@
+@inherits LayoutComponentBase
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Components
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject UiStateService UiState
+
+<!-- Ambient Scene & Particle System -->
+<SceneBackground />
+<ParticleBackground />
+
+<!-- Achievement Toast Notification Container -->
+<AchievementToast />
+
+<!-- Root-Level Modal Overlay Container -->
+@if (UiState.ActiveModal == "inventory")
+{
+    <InventoryModal OnClose="CloseModal" />
+}
+else if (UiState.ActiveModal == "journal")
+{
+    <JournalModal OnClose="CloseModal" />
+}
+else if (UiState.ActiveModal == "bestiary")
+{
+    <BestiaryModal OnClose="CloseModal" />
+}
+else if (UiState.ActiveModal == "codex")
+{
+    <CharacterCodexModal OnClose="CloseModal" />
+}
+else if (UiState.ActiveModal == "achievements")
+{
+    <AchievementsModal OnClose="CloseModal" />
+}
+else if (UiState.ActiveModal == "settings")
+{
+    <SettingsModal OnClose="CloseModal" OnReturnToHome="CloseModal" />
+}
+else if (UiState.ActiveModal == "leaderboard")
+{
+    <LeaderboardModal OnClose="CloseModal" />
+}
+
+@*
+    CRITICAL FIX: Use a SINGLE wrapper div with a dynamic CSS class.
+    If we use @if/@else with @Body in both branches, Blazor destroys and
+    re-creates the Index component on every layout switch, which re-fires
+    OnInitialized and resets UiState.IsLandingPage back to true — causing
+    an infinite loop. With a single div, @Body stays at the same position
+    in the component tree and is never re-mounted.
+*@
+<div class="@GetLayoutClass()">
+
+    <header class="glass-panel game-header @(UiState.IsLandingPage ? "" : "game-header--play")"
+            style="@(UiState.IsLandingPage ? "flex-shrink: 0;" : "")">
+        <div class="game-header-brand">
+            <div class="game-title">The Prince's Rebellion</div>
+            <div class="game-subtitle hide-mobile">Dark Fantasy Turn-Based RPG</div>
+        </div>
+        @if (UiState.IsLandingPage)
+        {
+            <div class="game-header-actions">
+                <a href="https://engomarabd-elaziz.github.io/My-Portofolio/"
+                   target="_blank" rel="noopener noreferrer" class="signature-link">
+                    Omar Abdelaziz
+                </a>
+                <button class="btn-quick-icon" @onclick='() => UiState.OpenModal("leaderboard")' title="Hall of Legends — Leaderboard" style="color: var(--color-warning);">
+                    <SvgIcon Name="crown" Size="1.4rem" Color="var(--color-warning)" />
+                </button>
+                <button class="btn-quick-icon" @onclick='() => UiState.OpenModal("settings")' title="Game Settings">
+                    <SvgIcon Name="settings" Size="1.4rem" />
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="game-header-actions game-header-actions--wide">
+                <a href="https://engomarabd-elaziz.github.io/My-Portofolio/"
+                   target="_blank" rel="noopener noreferrer" class="signature-link hide-on-compact">
+                    Omar Abdelaziz
+                </a>
+                @if (GameEngine.CurrentPhase != GamePhase.NameInput)
+                {
+                    <QuickMenu />
+                }
+            </div>
+        }
+    </header>
+
+    @if (ShowHud())
+    {
+        <div class="hud-wrapper portal-transition">
+            <PlayerHud />
+        </div>
+    }
+
+    <main class="@(UiState.IsLandingPage ? "" : "game-main")"
+          style="@(UiState.IsLandingPage ? "flex: 1; width: 100%;" : "")">
+        @Body
+    </main>
+
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += StateHasChanged;
+        UiState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+        UiState.OnChange -= StateHasChanged;
+    }
+
+    private void CloseModal() => UiState.CloseModal();
+
+    private bool IsGameplayPhase() =>
+        GameEngine.CurrentPhase == GamePhase.ShipNavigation ||
+        GameEngine.CurrentPhase == GamePhase.EventNotification ||
+        GameEngine.CurrentPhase == GamePhase.Battle ||
+        GameEngine.CurrentPhase == GamePhase.KingBattle ||
+        GameEngine.CurrentPhase == GamePhase.GameOver ||
+        GameEngine.CurrentPhase == GamePhase.Victory;
+
+    private bool ShowHud() =>
+        !UiState.IsLandingPage &&
+        GameEngine.CurrentPhase != GamePhase.NameInput &&
+        GameEngine.CurrentPhase != GamePhase.GameOver &&
+        GameEngine.CurrentPhase != GamePhase.Victory &&
+        IsGameplayPhase();
+
+    private string GetLayoutClass()
+    {
+        if (UiState.IsLandingPage)
+        {
+            return "landing-layout";
+        }
+
+        return ShowHud() ? "game-layout game-layout--hud" : "game-layout game-layout--no-hud";
+    }
+}

@@ -1,0 +1,396 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@implements IDisposable
+
+@if (GameEngine.CurrentDialogue != null)
+{
+    var msg = GameEngine.CurrentDialogue;
+    
+    // Strict Speaker Categorization: Is it a character or a non-character (Narrator/System)?
+    bool isCharacterSpeaker = !string.IsNullOrWhiteSpace(msg.Speaker) && 
+                             msg.Speaker != "Narrator" && 
+                             msg.Speaker != "System" && 
+                             msg.Position != "Center";
+
+    bool isNarratorOrCenter = !isCharacterSpeaker;
+
+    // Character Side Placement
+    bool isLeftSpeaker = isCharacterSpeaker && (msg.Position == "Left" || msg.Speaker == "Prince" || msg.Speaker == "The Prince" || msg.Speaker == GameEngine.Player.Name);
+    bool isRightSpeaker = isCharacterSpeaker && !isLeftSpeaker;
+
+    <!-- Fixed Full-Screen Overlay (Keeps dialogue OUT of flex layout flow) -->
+    <div class="dialogue-panel-overlay @(msg.ShakeScreen ? "shake-effect" : "")">
+
+        <!-- Standing Character Portraits (Hero on Left, NPCs/Enemies on Right) -->
+        @if (isLeftSpeaker)
+        {
+            <FullCharacterPortrait CharacterName="@msg.Speaker" 
+                                   Expression="@msg.Expression" 
+                                   Position="Left" 
+                                   IsActiveSpeaker="true" />
+        }
+        else if (isRightSpeaker)
+        {
+            <FullCharacterPortrait CharacterName="@msg.Speaker" 
+                                   Expression="@msg.Expression" 
+                                   Position="Right" 
+                                   IsActiveSpeaker="true" />
+        }
+
+        <!-- Visual Novel Dialogue Window (CENTER for Non-Characters / Narrator, BOTTOM for Characters) -->
+        <div class="vn-dialogue-wrapper @(isNarratorOrCenter ? "mode-center-narrator" : "mode-bottom-dialogue") animate-fade-in">
+            
+            <!-- Character / Narrator Nameplate -->
+            <div class="vn-nameplate" style="border-color: @msg.AccentColor; box-shadow: 0 0 15px @(msg.AccentColor)66;">
+                <span class="nameplate-icon">
+                    @if (isNarratorOrCenter)
+                    {
+                        <SvgIcon Name="scroll" Size="1.1rem" Color="@msg.AccentColor" />
+                    }
+                    else
+                    {
+                        <SvgIcon Name="codex" Size="1.1rem" Color="@msg.AccentColor" />
+                    }
+                </span>
+                <span class="nameplate-title" style="color: @msg.AccentColor;">
+                    @(isNarratorOrCenter ? "Story Event" : msg.Speaker)
+                </span>
+                <span class="nameplate-tag">
+                    @(isNarratorOrCenter ? "Narrative" : msg.Expression)
+                </span>
+            </div>
+
+            <!-- Main Dialogue Glass Window -->
+            <div class="vn-dialogue-card @(isNarratorOrCenter ? "narrator-card-style" : "")" @onclick="HandleDialogueClick">
+                
+                <!-- Dialogue Text Display -->
+                <div class="vn-dialogue-text @(isNarratorOrCenter ? "text-centered-narrator" : "")">
+                    @displayedText
+                    @if (isTyping)
+                    {
+                        <span class="typing-cursor">|</span>
+                    }
+                </div>
+
+                <!-- Footer & Story Controls Bar -->
+                <div class="vn-dialogue-footer">
+                    <div class="vn-story-controls" @onclick:stopPropagation="true">
+                        <button class="btn-vn-control @(isAutoPlay ? "active-control" : "")" @onclick="ToggleAutoPlay" title="Auto Play Dialogue">
+                            <SvgIcon Name="play" Size="0.85rem" /> Auto
+                        </button>
+                        <button class="btn-vn-control" @onclick="FastForward" title="Skip to Next">
+                            <SvgIcon Name="arrow-right" Size="0.85rem" /> Skip
+                        </button>
+                    </div>
+
+                    <div class="vn-continue-indicator animate-pulse">
+                        <span>Continue</span>
+                        <SvgIcon Name="arrow-right" Size="1rem" Color="var(--accent-primary)" />
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+}
+
+<style>
+    /* Fixed overlay - contained within game-phase-container */
+    .dialogue-panel-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5000;
+        overflow: hidden;
+    }
+
+    .dialogue-panel-overlay > * {
+        pointer-events: auto;
+    }
+
+    /* Bottom Dialogue Window for Character Dialogues */
+    .vn-dialogue-wrapper.mode-bottom-dialogue {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(950px, 100%);
+        max-height: min(46vh, 380px);
+        z-index: 5100;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    /* CENTER Dialogue Window for Non-Character Narrator / Dramatic Story Events */
+    .vn-dialogue-wrapper.mode-center-narrator {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(850px, 94%);
+        max-height: min(72vh, 520px);
+        overflow-y: auto;
+        z-index: 5500;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .narrator-card-style {
+        border-color: rgba(239, 68, 68, 0.6) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(239, 68, 68, 0.3) !important;
+        background: rgba(15, 23, 42, 0.96) !important;
+        padding: 2.25rem 2.5rem 1.5rem 2.5rem !important;
+    }
+
+    .text-centered-narrator {
+        text-align: center;
+        font-family: var(--font-heading);
+        font-size: 1.35rem;
+        color: #F8FAFC;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .vn-nameplate {
+        align-self: flex-start;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid var(--accent-primary);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        padding: 0.45rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.4);
+        margin-left: 1.5rem;
+        position: relative;
+        z-index: 5002;
+    }
+
+    .mode-center-narrator .vn-nameplate {
+        align-self: center;
+        margin-left: 0;
+    }
+
+    .nameplate-title {
+        font-family: var(--font-heading);
+        font-size: 1.25rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+    }
+
+    .nameplate-tag {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-left: 0.4rem;
+        padding-left: 0.5rem;
+        border-left: 1px solid var(--border-light);
+    }
+
+    .vn-dialogue-card {
+        background: rgba(30, 41, 59, 0.94);
+        border: 1px solid var(--border-glow);
+        border-radius: 16px;
+        padding: 1.75rem 2rem 1.25rem 2rem;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.15);
+        cursor: pointer;
+        min-height: 120px;
+        max-height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 5001;
+    }
+
+    .vn-dialogue-card:hover {
+        border-color: #7DD3FC;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.25);
+    }
+
+    .vn-dialogue-text {
+        font-size: 1.25rem;
+        line-height: 1.7;
+        color: #F8FAFC;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        min-height: 3.5rem;
+    }
+
+    .typing-cursor {
+        color: var(--accent-primary);
+        font-weight: bold;
+        animation: cursorBlink 0.8s infinite;
+    }
+
+    @@keyframes cursorBlink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
+    .vn-dialogue-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-light);
+        padding-top: 0.75rem;
+    }
+
+    .vn-story-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-vn-control {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid var(--border-light);
+        color: var(--text-muted);
+        padding: 0.3rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .btn-vn-control:hover, .btn-vn-control.active-control {
+        background: rgba(56, 189, 248, 0.2);
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+    }
+
+    .vn-continue-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--accent-primary);
+        font-size: 0.95rem;
+        letter-spacing: 0.05em;
+    }
+</style>
+
+@code {
+    private string fullText = string.Empty;
+    private string displayedText = string.Empty;
+    private bool isTyping = false;
+    private bool isAutoPlay = false;
+    private CancellationTokenSource? cts;
+
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += HandleEngineStateChanged;
+        _ = AudioService.PlayTrackAsync("Story");
+        StartTextTypewriter();
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= HandleEngineStateChanged;
+        cts?.Cancel();
+    }
+
+    private void HandleEngineStateChanged()
+    {
+        StartTextTypewriter();
+        StateHasChanged();
+    }
+
+    private void StartTextTypewriter()
+    {
+        if (GameEngine.CurrentDialogue == null) return;
+        
+        cts?.Cancel();
+        cts = new CancellationTokenSource();
+        fullText = GameEngine.CurrentDialogue.Text;
+        
+        _ = RunTypewriter(cts.Token);
+    }
+
+    private async Task RunTypewriter(CancellationToken token)
+    {
+        isTyping = true;
+        displayedText = string.Empty;
+        await AudioService.StartDuckingAsync();
+
+        for (int i = 0; i < fullText.Length; i++)
+        {
+            if (token.IsCancellationRequested) return;
+
+            displayedText += fullText[i];
+            if (i % 3 == 0)
+            {
+                await AudioService.PlayTypingTickAsync();
+            }
+            StateHasChanged();
+
+            await Task.Delay(25, token).ContinueWith(_ => { });
+        }
+
+        isTyping = false;
+        await AudioService.StopDuckingAsync();
+        StateHasChanged();
+
+        if (isAutoPlay)
+        {
+            await Task.Delay(2000, token).ContinueWith(_ => { });
+            if (!token.IsCancellationRequested)
+            {
+                _ = Next();
+            }
+        }
+    }
+
+    private async Task HandleDialogueClick()
+    {
+        if (isTyping)
+        {
+            // First click: instantly reveal sentence
+            cts?.Cancel();
+            displayedText = fullText;
+            isTyping = false;
+            await AudioService.StopDuckingAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            // Second click: advance dialogue
+            await Next();
+        }
+    }
+
+    private async Task Next()
+    {
+        await AudioService.PlayClickAsync();
+        GameEngine.NextDialogue();
+    }
+
+    private void ToggleAutoPlay()
+    {
+        isAutoPlay = !isAutoPlay;
+    }
+
+    private async Task FastForward()
+    {
+        cts?.Cancel();
+        isTyping = false;
+        displayedText = fullText;
+        await AudioService.StopDuckingAsync();
+        await Next();
+    }
+}

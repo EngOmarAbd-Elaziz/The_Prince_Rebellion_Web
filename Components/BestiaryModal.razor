@@ -1,0 +1,127 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@implements IDisposable
+
+<div class="modal-backdrop animate-fade-in" @onclick="Close">
+    <!-- GAME PAUSED Banner Indicator -->
+    <div class="pause-banner-wrapper">
+        <div class="pause-banner">
+            <span><SvgIcon Name="pause" Size="1rem" Color="var(--color-warning)" /> GAME PAUSED</span>
+        </div>
+    </div>
+
+    <!-- Bestiary Grimoire Book Window - Magical Scale Animation -->
+    <div class="glass-panel modal-content-card anim-grimoire" style="max-width: 750px; max-height: 85vh; display: flex; flex-direction: column;" @onclick:stopPropagation="true">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h2 class="font-heading" style="color: var(--color-danger); display: flex; align-items: center; gap: 0.5rem;">
+                <SvgIcon Name="skull" Size="1.4rem" Color="var(--color-danger)" /> Monster & Enemy Bestiary
+            </h2>
+            <button class="btn-quick-icon" @onclick="Close">
+                <SvgIcon Name="close" Size="1.1rem" />
+            </button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; padding: 1rem 0; text-align: left;">
+            
+            <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.3);">
+                <div style="text-align: center;"><SvgIcon Name="sword" Size="2.5rem" Color="var(--color-danger)" /></div>
+                <div style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-danger); text-align: center; margin-top: 0.5rem;">Guard</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">The King's loyal foot soldiers enforcing tyranny across the ship and town.</div>
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span><strong>Health:</strong> 25 - 35 HP</span>
+                    <span><strong>Sword Dmg:</strong> 8 - 14</span>
+                    <span><strong>Gun Dmg:</strong> 5 - 10</span>
+                    <span><strong>Location:</strong> Prison Ship</span>
+                </div>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.3);">
+                <div style="text-align: center;"><SvgIcon Name="fire" Size="2.5rem" Color="var(--color-danger)" /></div>
+                <div style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-danger); text-align: center; margin-top: 0.5rem;">Wild Attack Dog</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Feral attack hound beasts lurking inside abandoned ship rooms.</div>
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span><strong>Health:</strong> 25 - 35 HP</span>
+                    <span><strong>Bite Dmg:</strong> 8 - 14</span>
+                    <span><strong>Location:</strong> Ship Rooms</span>
+                </div>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.5);">
+                <div style="text-align: center;"><SvgIcon Name="anchor" Size="2.5rem" Color="var(--color-warning)" /></div>
+                <div style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-warning); text-align: center; margin-top: 0.5rem;">Ship Captain</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Commander of the prisoner transport vessel. Must be defeated to free the prisoners.</div>
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span><strong>Health:</strong> 80 HP</span>
+                    <span><strong>Sword Dmg:</strong> 8 - 14</span>
+                    <span><strong>Location:</strong> Ship Roof</span>
+                </div>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.8); background: rgba(127, 29, 29, 0.3);">
+                <div style="text-align: center;"><SvgIcon Name="crown" Size="2.5rem" Color="var(--color-danger)" /></div>
+                <div style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-danger); text-align: center; margin-top: 0.5rem;">The King</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">The tyrant monarch of the town. Possesses ruthless strength and heavy weaponry.</div>
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span><strong>Health:</strong> 400 HP</span>
+                    <span><strong>Sword Dmg:</strong> 14 - 28</span>
+                    <span><strong>Gun Dmg:</strong> 15 - 30</span>
+                    <span><strong>Location:</strong> Throne Room</span>
+                </div>
+            </div>
+
+        </div>
+
+        <button class="btn-fantasy" style="width: 100%; margin-top: 0.5rem;" @onclick="Close">Resume Game</button>
+    </div>
+</div>
+
+<style>
+    .pause-banner-wrapper {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10005;
+        pointer-events: none;
+    }
+
+    .pause-banner {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--color-warning);
+        border-radius: 20px;
+        padding: 0.4rem 1.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--color-warning);
+        letter-spacing: 0.1em;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameEngine.PauseGame();
+        await AudioService.PlayModalOpenAsync();
+    }
+
+    public void Dispose()
+    {
+        GameEngine.ResumeGame();
+    }
+
+    private async Task Close()
+    {
+        await AudioService.PlayModalCloseAsync();
+        GameEngine.ResumeGame();
+        await OnClose.InvokeAsync();
+    }
+}

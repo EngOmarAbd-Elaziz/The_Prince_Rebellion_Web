@@ -1,0 +1,77 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject IJSRuntime JSRuntime
+@inject UiStateService UiState
+
+<div class="modal-backdrop animate-fade-in" style="background: rgba(15, 23, 42, 0.95); z-index: 15000; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; position: fixed; inset: 0;">
+    <div style="width: 100%; max-width: 700px; height: 60vh; overflow: hidden; position: relative; text-align: center;">
+        <div class="credits-roll" style="display: flex; flex-direction: column; gap: 2.5rem; padding: 0;">
+            <h1 class="font-heading" style="font-size: 3rem; color: var(--color-success); letter-spacing: 0.1em;">
+                THE PRINCE REBELLION
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--accent-primary);">
+                Victory has been achieved. Injustice has fallen!
+            </p>
+
+            <div style="border-top: 1px solid var(--border-light); width: 60%; margin: 0 auto;"></div>
+
+            <div>
+                <h3 class="font-heading" style="color: var(--color-warning);">LEAD ARCHITECT & CREATIVE DIRECTOR</h3>
+                <div style="margin-top: 0.75rem;">
+                    <a href="https://engomarabd-elaziz.github.io/My-Portofolio/" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="signature-link"
+                       style="font-size: 1.1rem; padding: 0.5rem 1.5rem;">
+                        Omar Abd El-Aziz
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-heading" style="color: var(--color-warning);">ORIGINAL GAME MECHANICS</h3>
+                <p style="font-size: 1.1rem; color: var(--text-main); margin-top: 0.5rem;">The Prince Rebellion Console Engine</p>
+            </div>
+
+            <div>
+                <h3 class="font-heading" style="color: var(--color-warning);">WEB APPLICATION FRAMEWORK</h3>
+                <p style="font-size: 1.1rem; color: var(--text-main); margin-top: 0.5rem;">Blazor WebAssembly (.NET 9)</p>
+            </div>
+
+            <div>
+                <h3 class="font-heading" style="color: var(--color-warning);">AUDIO SYNTHESIS ENGINE</h3>
+                <p style="font-size: 1.1rem; color: var(--text-main); margin-top: 0.5rem;">Web Audio API Synthesizer</p>
+            </div>
+
+            <div>
+                <h3 class="font-heading" style="color: var(--color-warning);">VISUAL DESIGN SYSTEM</h3>
+                <p style="font-size: 1.1rem; color: var(--text-main); margin-top: 0.5rem;">Dark Fantasy Engine</p>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-light); width: 60%; margin: 0 auto;"></div>
+
+            <div style="padding-bottom: 2rem;">
+                <h2 class="font-heading" style="color: var(--text-main); font-size: 2rem;">
+                    THANK YOU FOR PLAYING!
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stationary Fixed Button at the Center Bottom of the Screen -->
+    <div style="margin-top: 2rem; position: relative; z-index: 15001;">
+        <button class="btn-fantasy btn-success" style="padding: 0.85rem 2rem; font-size: 1.1rem;" @onclick="Restart">
+            Return to Main Menu
+        </button>
+    </div>
+</div>
+
+@code {
+    private async Task Restart()
+    {
+        try { await JSRuntime.InvokeVoidAsync("triggerCinematicReturnToHome"); } catch { }
+        GameEngine.RestartGame();
+        UiState.SetLandingPage(true);
+    }
+}

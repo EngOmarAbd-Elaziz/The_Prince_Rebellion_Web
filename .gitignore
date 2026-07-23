@@ -1,0 +1,21 @@
+## Ignore Visual Studio & .NET Build Artifacts
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+
+## Ignore Publish / Build outputs
+publish/
+*.azurePubxml
+
+## Ignore OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Ignore Environment secret files
+appsettings.Development.json
+*.local.json

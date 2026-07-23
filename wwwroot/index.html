@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>The Prince's Rebellion</title>
+    <base href="/" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;600;700;900&display=swap"
+        rel="stylesheet">
+
+    <link href="css/theme.css" rel="stylesheet" />
+    <link href="css/animations.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="css/responsive.css" rel="stylesheet" />
+    <link href="css/game-ui.css" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="game_icon.ico" />
+    <link href="AdventureGameWeb.styles.css" rel="stylesheet" />
+
+    <style>
+        /* LOADER: covers entire viewport, sits above everything */
+        #cinematic-loader {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999999;
+            overflow: hidden;
+        }
+
+        /* While loader is active, body must NOT scroll */
+        body.loading {
+            overflow: hidden !important;
+        }
+
+        /* After loader gone, body and #app operate normally */
+        body {
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        #app {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        #cinematic-loader,
+        #cinematic-loader * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+
+<body class="dark-theme loading">
+
+    <!-- AAA Cinematic Loading Screen — position: fixed, z-index: 999999, covers all -->
+    <div id="cinematic-loader" class="cinematic-loader-container">
+        <!-- Markup injected by cinematicLoader.js on DOMContentLoaded if empty; static fallback below -->
+    </div>
+
+    <!-- Main Blazor WASM Container -->
+    <div id="app"></div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+    </div>
+
+    <script src="js/cinematicLoader.js"></script>
+    <script>
+        (function () {
+            var loaderRoot = document.getElementById('cinematic-loader');
+            if (loaderRoot && window.cinematicLoader) {
+                loaderRoot.innerHTML = cinematicLoader.buildMarkup('', 'Initializing Engine...');
+            }
+
+            var phases = [
+                { pct: 0, msg: "Initializing Engine..." },
+                { pct: 20, msg: "Loading Royal Assets & Audio..." },
+                { pct: 40, msg: "Preparing Character Portraits..." },
+                { pct: 65, msg: "Building Prison Ship Realm..." },
+                { pct: 85, msg: "Applying Dark Visual Effects..." },
+                { pct: 100, msg: "Rebellion Ready!" }
+            ];
+
+            var tips = [
+                "Every choice shapes your destiny. Some paths are dangerous, some are unforgiving.",
+                "In darkness, every choice can ignite a revolution.",
+                "Kings rule kingdoms, but courage and strategy change history.",
+                "Escaping a room is sometimes wiser than immediate battle.",
+                "Save your ammunition — you will need it for the boss.",
+                "Uniting rescued prisoners creates an unstoppable force."
+            ];
+
+            var msgEl = document.getElementById('msg');
+            var tipEl = document.getElementById('tip');
+            var logoEl = document.querySelector('.loader-logo-group');
+
+            var progress = 0;
+            var tipIdx = 0;
+
+            var progressInterval = setInterval(function () {
+                if (progress < 100) {
+                    progress++;
+                    for (var i = phases.length - 1; i >= 0; i--) {
+                        if (progress >= phases[i].pct) {
+                            if (msgEl) msgEl.textContent = phases[i].msg;
+                            break;
+                        }
+                    }
+                    if (window.cinematicLoader) {
+                        cinematicLoader.setProgress(progress, '');
+                    }
+
+                    if (progress === 100) {
+                        clearInterval(progressInterval);
+                        finishLoading();
+                    }
+                }
+            }, 65);
+
+            setInterval(function () {
+                if (tipEl && progress < 100) {
+                    tipIdx = (tipIdx + 1) % tips.length;
+                    tipEl.classList.add('tip-fade-out');
+                    setTimeout(function () {
+                        tipEl.textContent = tips[tipIdx];
+                        tipEl.classList.remove('tip-fade-out');
+                    }, 320);
+                }
+            }, 2500);
+
+            function finishLoading() {
+                if (msgEl) msgEl.textContent = "Rebellion Ready!";
+                if (logoEl) logoEl.classList.add('logo-final-shine');
+                if (loaderRoot) loaderRoot.classList.add('loader-complete-flash');
+
+                setTimeout(function () {
+                    var loader = document.getElementById('cinematic-loader');
+                    if (loader) {
+                        loader.classList.add('zoom-fade-out');
+                        setTimeout(function () {
+                            if (loader.parentNode) loader.parentNode.removeChild(loader);
+                            document.body.classList.remove('loading');
+                        }, 700);
+                    }
+                }, 500);
+            }
+
+            window.completeCinematicLoading = function () { };
+
+            window.triggerCinematicReturnToHome = function () {
+                return new Promise(function (resolve) {
+                    document.body.classList.add('loading');
+                    var loader = document.createElement('div');
+                    loader.id = 'cinematic-loader';
+                    loader.className = 'cinematic-loader-container';
+                    if (window.cinematicLoader) {
+                        loader.innerHTML = cinematicLoader.buildMarkup('dyn-', 'Returning to Launcher...');
+                    }
+                    document.body.appendChild(loader);
+
+                    var fill = document.getElementById('dyn-fill');
+                    var pct = document.getElementById('dyn-pct');
+                    var tip = document.getElementById('dyn-tip');
+                    var msg = document.getElementById('dyn-msg');
+                    var logoEl2 = loader.querySelector('.loader-logo-group');
+
+                    var tipIdx2 = 0;
+                    var tipInterval = setInterval(function () {
+                        if (tip) {
+                            tipIdx2 = (tipIdx2 + 1) % tips.length;
+                            tip.classList.add('tip-fade-out');
+                            setTimeout(function () {
+                                tip.textContent = tips[tipIdx2];
+                                tip.classList.remove('tip-fade-out');
+                            }, 320);
+                        }
+                    }, 2500);
+
+                    var p = 0;
+                    var iv = setInterval(function () {
+                        p += 2;
+                        if (window.cinematicLoader) {
+                            cinematicLoader.setProgress(p, 'dyn-');
+                        }
+                        if (p >= 100) {
+                            clearInterval(iv);
+                            clearInterval(tipInterval);
+                            if (msg) msg.textContent = "Rebellion Ready!";
+                            if (logoEl2) logoEl2.classList.add('logo-final-shine');
+                            loader.classList.add('loader-complete-flash');
+
+                            setTimeout(function () {
+                                loader.classList.add('zoom-fade-out');
+                                setTimeout(function () {
+                                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                                    document.body.classList.remove('loading');
+                                    resolve();
+                                }, 700);
+                            }, 500);
+                        }
+                    }, 40);
+                });
+            };
+        })();
+    </script>
+
+    <script src="js/audioSynth.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/storage.js"></script>
+    <script>
+        // Interactive Cursor Ripple Wave Animation System
+        (function () {
+            // Ripple style injection
+            var style = document.createElement('style');
+            style.innerHTML = `
+                .cursor-ripple {
+                    position: fixed;
+                    pointer-events: none;
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%) scale(0.2);
+                    opacity: 0.9;
+                    z-index: 9999999;
+                    transition: transform 0.6s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.6s ease-out;
+                }
+                .cursor-ripple.hover-wave {
+                    width: 32px;
+                    height: 32px;
+                    border: 2px solid rgba(56, 189, 248, 0.75);
+                    box-shadow: 0 0 12px rgba(56, 189, 248, 0.6), inset 0 0 8px rgba(56, 189, 248, 0.4);
+                }
+                .cursor-ripple.click-wave {
+                    width: 44px;
+                    height: 44px;
+                    border: 2px solid rgba(245, 158, 11, 0.9);
+                    background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+                    box-shadow: 0 0 18px rgba(245, 158, 11, 0.85);
+                }
+                .cursor-ripple.active-expand {
+                    transform: translate(-50%, -50%) scale(1.8);
+                    opacity: 0;
+                }
+            `;
+            document.head.appendChild(style);
+
+            var lastHoverTime = 0;
+            var interactiveSelector = 'button, a, input, select, textarea, [role="button"], .btn-fantasy, .hero-card, .glass-card, [onclick]';
+
+            document.addEventListener('mouseover', function (e) {
+                var target = e.target.closest(interactiveSelector);
+                if (target) {
+                    var now = Date.now();
+                    if (now - lastHoverTime > 300) {
+                        lastHoverTime = now;
+                        createRipple(e.clientX, e.clientY, 'hover-wave');
+                    }
+                }
+            }, true);
+
+            document.addEventListener('click', function (e) {
+                createRipple(e.clientX, e.clientY, 'click-wave');
+            }, true);
+
+            function createRipple(x, y, typeClass) {
+                var ripple = document.createElement('div');
+                ripple.className = 'cursor-ripple ' + typeClass;
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                document.body.appendChild(ripple);
+
+                requestAnimationFrame(function () {
+                    ripple.classList.add('active-expand');
+                });
+
+                setTimeout(function () {
+                    if (ripple.parentNode) {
+                        ripple.parentNode.removeChild(ripple);
+                    }
+                }, 650);
+            }
+        })();
+    </script>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>

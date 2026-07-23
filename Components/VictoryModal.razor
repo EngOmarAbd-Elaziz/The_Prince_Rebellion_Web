@@ -1,0 +1,133 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@inject IJSRuntime JSRuntime
+@inject UiStateService UiState
+@inject ScoreService ScoreService
+@inject AchievementService AchievementService
+
+@if (GameEngine.CurrentPhase == GamePhase.Victory)
+{
+    <div class="modal-backdrop animate-fade-in">
+        <div class="glass-panel modal-content-card"
+             style="border-color: var(--color-success); box-shadow: 0 0 45px rgba(34, 197, 94, 0.4);">
+            <div class="speaker-avatar"
+                 style="margin: 0 auto; width: 80px; height: 80px; background: rgba(34, 197, 94, 0.15); display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                <SvgIcon Name="crown" Size="3rem" Color="var(--color-success)" />
+            </div>
+
+            <h1 class="font-heading" style="color: var(--color-success); font-size: 2.5rem;">
+                YOU WIN !!!
+            </h1>
+
+            <p style="font-size: 1.25rem; color: var(--text-main); line-height: 1.6;">
+                You defeated the King! Injustice has ended and peace is restored to the town!
+            </p>
+
+            <div
+                style="background: rgba(15, 23, 42, 0.6); padding: 1.25rem; border-radius: 10px; border: 1px solid var(--border-light); text-align: left;">
+                <div
+                    style="font-size: 0.95rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <SvgIcon Name="achievements" Size="1.1rem" Color="var(--accent-primary)" /> Hero of the Rebellion:
+                    @GameEngine.Player.Name
+                </div>
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-weight: 600; font-size: 0.95rem;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="coins" Size="1rem" Color="var(--color-warning)" /> Coins: @GameEngine.Player.Coins
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="shield" Size="1rem" Color="var(--accent-primary)" /> Shield:
+                        @GameEngine.Player.Shield
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="target" Size="1rem" Color="var(--color-warning)" /> Ammo: @GameEngine.Player.Ammo
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="chain" Size="1rem" Color="var(--color-success)" /> Saved: @(25 -
+                                                                    GameEngine.Player.PrisonersRemaining)
+                    </span>
+                </div>
+            </div>
+
+            <div
+                style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 0.75rem 1rem; text-align: center; margin-top: 0.5rem;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">FINAL SCORE</div>
+                <div class="font-heading" style="font-size: 2.5rem; color: var(--color-warning); font-weight: 900;">
+                    @_finalScore</div>
+                    @if (!string.IsNullOrWhiteSpace(GameEngine.UserName))
+                    {
+                        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">Recorded as: <strong
+                            style="color: var(--text-main);">@GameEngine.UserName</strong></div>
+                        }
+                        @if (_scoreSubmitted)
+                        {
+                            <div style="font-size: 0.78rem; color: var(--color-success); margin-top: 0.3rem;">✓ High score saved to leaderboard</div>
+                            }
+                        </div>
+
+                        <button class="btn-fantasy btn-success"
+                                style="width: 100%; margin-top: 0.5rem; justify-content: center; gap: 0.5rem;" @onclick="Restart"
+                                disabled="@_isSaving">
+                            <SvgIcon Name="sword" Size="1.1rem" />
+                            @if (_isSaving)
+                            {
+                                <span> Saving...</span>
+                            }
+                            else
+                            {
+                                <span> Play Again</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            }
+
+@code {
+    private int _finalScore;
+    private int _achievementsCount;
+    private bool _scoreSubmitted;
+    private bool _isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameEngine.OnChange += StateHasChanged;
+        await AudioService.PlayVictoryFanfareAsync();
+        _isSaving = true;
+        _scoreSubmitted = await SubmitScoreAsync();
+        _isSaving = false;
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+    }
+
+    private async Task<bool> SubmitScoreAsync()
+    {
+        _achievementsCount = AchievementService.Achievements.Count(a => a.IsUnlocked);
+        _finalScore = GameEngine.CalculateScore(true);
+        _finalScore += _achievementsCount * 30;
+        StateHasChanged();
+
+        var username = GameEngine.UserName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return false;
+        }
+
+        var result = await ScoreService.SaveOrUpdateScoreAsync(username, _finalScore);
+        _scoreSubmitted = result;
+        StateHasChanged();
+        return result;
+    }
+
+    private async Task Restart()
+    {
+        await AudioService.PlayClickAsync();
+        try { await JSRuntime.InvokeVoidAsync("triggerCinematicReturnToHome"); } catch { }
+        GameEngine.RestartGame();
+        UiState.SetLandingPage(true);
+    }
+}

@@ -1,0 +1,734 @@
+/* Dark Fantasy Fullscreen RPG Theme System for The Prince's Rebellion */
+
+:root {
+    --bg-main: #0F172A;
+    --bg-panel: #1E293B;
+    --bg-card: #334155;
+    --bg-card-hover: #475569;
+    --accent-primary: #38BDF8;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --color-success: #22C55E;
+    --color-danger: #EF4444;
+    --color-warning: #FACC15;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(56, 189, 248, 0.4);
+
+    --font-heading: 'Cinzel', serif;
+    --font-body: 'Outfit', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.35) rgba(15, 23, 42, 0.55);
+}
+
+html,
+body,
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+.btn-fantasy,
+.hero-card,
+.glass-card,
+[onclick] {
+    cursor: url("/cursors/cursor.cur") 1 1, pointer !important;
+}
+
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden !important;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+}
+
+/* #app fills viewport — inner layouts handle their own scroll */
+#app {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    padding: 0;
+}
+
+/* Custom game-friendly scrollbars */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.92);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.45), rgba(14, 165, 233, 0.75));
+    border-radius: 999px;
+    border: 2px solid rgba(15, 23, 42, 0.92);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.7), rgba(14, 165, 233, 0.9));
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: 0.05em;
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(56, 189, 248, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card {
+    background: rgba(51, 65, 85, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    background: rgba(71, 85, 105, 0.95);
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+}
+
+/* ==================================================== */
+/* AAA CINEMATIC LOADING SCREEN STYLES (MATCHES USER SCREENSHOT) */
+/* ==================================================== */
+
+.cinematic-loader-container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    background: #020617;
+    overflow: hidden;
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Background Artwork with Continuous Cinematic Motion */
+.loader-artwork-bg {
+    position: absolute;
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+    background-image: url('../images/loading_bg.png');
+    background-size: cover;
+    background-position: center 70%;
+    /* Show sea & ship at bottom */
+    animation: bgCinematicPan 28s ease-in-out infinite alternate;
+    transform-origin: center center;
+    filter: brightness(0.98) contrast(1.08);
+}
+
+@keyframes bgCinematicPan {
+    0% {
+        transform: scale(1) translate(0, 0) rotate(0deg);
+        filter: brightness(0.95) contrast(1.05);
+    }
+
+    33% {
+        transform: scale(1.07) translate(-25px, -15px) rotate(0.4deg);
+        filter: brightness(1.05) contrast(1.1);
+    }
+
+    66% {
+        transform: scale(1.12) translate(15px, -25px) rotate(-0.3deg);
+        filter: brightness(1) contrast(1.08);
+    }
+
+    100% {
+        transform: scale(1.06) translate(-10px, 10px) rotate(0.2deg);
+        filter: brightness(0.98) contrast(1.05);
+    }
+}
+
+/* Atmospheric Moving Fog Layer */
+.loader-fog-layer {
+    position: absolute;
+    inset: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(ellipse at 50% 60%, rgba(56, 189, 248, 0.14) 0%, rgba(2, 132, 199, 0.05) 40%, transparent 70%),
+        linear-gradient(120deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(56, 189, 248, 0.08) 100%);
+    pointer-events: none;
+    animation: fogDrift 18s ease-in-out infinite alternate;
+}
+
+@keyframes fogDrift {
+    0% {
+        transform: translate(-4%, -4%) scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translate(4%, 3%) scale(1.1);
+        opacity: 0.85;
+    }
+
+    100% {
+        transform: translate(-2%, 4%) scale(1.05);
+        opacity: 0.6;
+    }
+}
+
+/* Pulsing Atmospheric Light Beam from Moonlit Sky */
+.loader-light-beam {
+    position: absolute;
+    top: -25%;
+    right: 15%;
+    width: 650px;
+    height: 1000px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(250, 204, 21, 0.06) 35%, transparent 70%);
+    transform: rotate(-25deg);
+    pointer-events: none;
+    animation: lightBeamPulse 9s ease-in-out infinite alternate;
+}
+
+@keyframes lightBeamPulse {
+    0% {
+        opacity: 0.35;
+        transform: rotate(-25deg) scale(0.95);
+    }
+
+    100% {
+        opacity: 0.8;
+        transform: rotate(-22deg) scale(1.08);
+    }
+}
+
+/* Dark Vignette Overlay */
+.loader-vignette-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 75% 50%, rgba(2, 6, 23, 0.2) 0%, rgba(2, 6, 23, 0.85) 75%, #020617 100%),
+        linear-gradient(to right, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.75) 45%, transparent 80%);
+    pointer-events: none;
+}
+
+/* Top-Left Main UI Block */
+.loader-left-content {
+    position: absolute;
+    top: 8vh;
+    left: 6vw;
+    width: 440px;
+    max-width: 90vw;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+}
+
+/* Crest Shield Emblem & Logo */
+.loader-logo-group {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.crest-emblem-frame {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(250, 204, 21, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.3), 0 0 35px rgba(56, 189, 248, 0.2);
+}
+
+.crest-crown {
+    position: absolute;
+    top: -12px;
+    font-size: 1.4rem;
+    filter: drop-shadow(0 0 8px #FACC15);
+}
+
+.crest-shield {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 10px #38BDF8);
+    animation: shieldPulse 3s ease-in-out infinite;
+}
+
+@keyframes shieldPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+.logo-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.loader-game-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.1rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-shadow: 0 0 25px rgba(56, 189, 248, 0.5), 0 4px 12px rgba(0, 0, 0, 0.9);
+}
+
+.loader-game-subtitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38BDF8;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+/* L O A D I N G Heading */
+.loader-status-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #38BDF8;
+    letter-spacing: 0.45em;
+    text-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+    margin-top: 0.5rem;
+    animation: headingGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes headingGlow {
+    0% {
+        opacity: 0.75;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+    }
+}
+
+/* Circular Sword Progress Ring — enhanced cinematic loader */
+.loader-ring-hero {
+    width: 120px;
+    height: 120px;
+    margin-left: 0.5rem;
+}
+
+.loader-progress-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.loader-ring-track {
+    fill: none;
+    stroke: rgba(56, 189, 248, 0.12);
+    stroke-width: 5;
+}
+
+.loader-ring-progress {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.18s ease-out;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
+}
+
+.loader-rune-ring--outer {
+    inset: 4px;
+    z-index: 1;
+    animation: spinRune 14s linear infinite;
+}
+
+.loader-rune-ring--inner {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px dashed rgba(250, 204, 21, 0.55);
+    box-shadow: 0 0 18px rgba(250, 204, 21, 0.25), inset 0 0 10px rgba(250, 204, 21, 0.12);
+    animation: spinRune 7s linear infinite reverse;
+    z-index: 1;
+    box-sizing: border-box;
+}
+
+.loader-ring-glow {
+    position: absolute;
+    inset: 22%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, transparent 72%);
+    animation: ringGlowPulse 2.2s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.loader-orbit-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: #FACC15;
+    box-shadow: 0 0 10px #FACC15, 0 0 18px rgba(56, 189, 248, 0.6);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.loader-orbit-dot--a {
+    animation: orbitSpin 4s linear infinite;
+}
+
+.loader-orbit-dot--b {
+    animation: orbitSpin 6s linear infinite reverse;
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    background: #38BDF8;
+    box-shadow: 0 0 8px #38BDF8;
+}
+
+.circular-sword-container {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+    align-self: flex-start;
+    margin-left: 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Reusable bounded spinner — prevents outer-rune-ring overflow in modals */
+.spinner-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.spinner-container--modal {
+    width: 64px;
+    height: 64px;
+}
+
+.spinner-container--sm {
+    width: 48px;
+    height: 48px;
+}
+
+.spinner-container .outer-rune-ring {
+    position: absolute;
+    inset: 0;
+}
+
+.outer-rune-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px dashed #38BDF8;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
+    animation: spinRune 10s linear infinite;
+    box-sizing: border-box;
+}
+
+@keyframes spinRune {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.inner-sword-emblem {
+    font-size: 2.2rem;
+    filter: drop-shadow(0 0 15px #38BDF8);
+    margin-bottom: -4px;
+}
+
+.circular-pct-text {
+    font-family: 'Cinzel', serif;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 0 0 12px #38BDF8;
+    position: relative;
+    z-index: 4;
+}
+
+/* Floating embers & scanlines overlay */
+.loader-ember-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.loader-ember {
+    position: absolute;
+    bottom: -10%;
+    left: calc(8% + (var(--i) * 8.5%));
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #FACC15 0%, #F59E0B 40%, transparent 70%);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+    animation: emberFloat calc(3.5s + (var(--i) * 0.35s)) ease-in infinite;
+    animation-delay: calc(var(--i) * 0.45s);
+    opacity: 0;
+}
+
+.loader-scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0.04;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.15) 2px,
+        rgba(255, 255, 255, 0.15) 4px
+    );
+    animation: scanlineDrift 8s linear infinite;
+}
+
+.loader-ellipsis {
+    display: inline-block;
+    min-width: 1.25em;
+    text-align: left;
+}
+
+.energy-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+    animation: barShimmer 1.6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+/* Progress Bar Track with Flourishes */
+.loader-progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.flourish-bar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.bar-flourish {
+    color: #38BDF8;
+    font-size: 0.85rem;
+    filter: drop-shadow(0 0 8px #38BDF8);
+}
+
+.energy-bar-track {
+    flex: 1;
+    height: 7px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.energy-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0284C7 0%, #38BDF8 70%, #7DD3FC 100%);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.9);
+    transition: width 0.15s ease-out;
+    position: relative;
+}
+
+.energy-spark-head {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: #FFFFFF;
+    box-shadow: 0 0 10px #FFFFFF, 0 0 20px #38BDF8;
+    border-radius: 50%;
+    animation: sparkPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sparkPulse {
+    0%, 100% {
+        box-shadow: 0 0 10px #FFFFFF, 0 0 20px #38BDF8;
+        opacity: 1;
+    }
+    50% {
+        box-shadow: 0 0 16px #FFFFFF, 0 0 28px #38BDF8, 0 0 40px rgba(56, 189, 248, 0.5);
+        opacity: 0.85;
+    }
+}
+
+.loader-msg-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: #94A3B8;
+    letter-spacing: 0.05em;
+}
+
+/* Bottom-Left Tip Box Wrapper (Matches Screenshot) */
+.loader-tip-box-wrapper {
+    position: absolute;
+    bottom: 8vh;
+    left: 6vw;
+    width: 440px;
+    max-width: 90vw;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: rgba(15, 23, 42, 0.82);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.tip-book-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid var(--border-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.tip-content-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tip-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #FACC15;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+.tip-body-text {
+    font-size: 0.88rem;
+    color: #CBD5E1;
+    line-height: 1.5;
+    transition: opacity 0.3s ease;
+}
+
+/* Bottom-Center Lore Quote (Matches Screenshot) */
+.loader-quote-center {
+    position: absolute;
+    bottom: 3.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-family: 'Cinzel', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #94A3B8;
+    letter-spacing: 0.06em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .loader-left-content {
+        top: 4vh;
+        left: 4vw;
+        width: 92vw;
+    }
+
+    .loader-tip-box-wrapper {
+        bottom: 8vh;
+        left: 4vw;
+        width: 92vw;
+    }
+
+    .loader-quote-center {
+        display: none;
+    }
+}
+
+/* Final Zoom & Fade Out */
+.zoom-fade-out {
+    opacity: 0 !important;
+    transform: scale(1.05) !important;
+    pointer-events: none !important;
+}

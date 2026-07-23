@@ -1,0 +1,484 @@
+/* ==============================================================
+   SITE-WIDE RESPONSIVE UI/UX — Mobile & Tablet
+   Breakpoints: 480px (phone), 640px (large phone), 768px (tablet),
+                1024px (small laptop)
+   ============================================================== */
+
+/* Safe-area support for notched devices */
+@supports (padding: max(0px)) {
+    .game-layout,
+    .landing-layout,
+    .modal-backdrop,
+    .cinematic-loader-container {
+        padding-left: max(0.75rem, env(safe-area-inset-left));
+        padding-right: max(0.75rem, env(safe-area-inset-right));
+    }
+
+    .game-layout {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* ==============================================================
+   TABLET (≤ 1024px)
+   ============================================================== */
+@media (max-width: 1024px) {
+    .modal-backdrop {
+        align-items: flex-start;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+    }
+
+    .modal-content-card {
+        margin: auto 0;
+        max-height: calc(100vh - 2rem);
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .game-header-actions--wide {
+        flex: 1;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+
+    .toast-achievement {
+        left: 1rem;
+        right: 1rem;
+        bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+        max-width: calc(100vw - 2rem);
+    }
+}
+
+@media (min-width: 769px) {
+    .modal-backdrop {
+        align-items: center;
+    }
+}
+
+/* ==============================================================
+   TABLET PORTRAIT (≤ 768px)
+   ============================================================== */
+@media (max-width: 768px) {
+    html,
+    body,
+    #app {
+        overflow-x: hidden;
+    }
+
+    /* Gameplay layout scroll handled in game-ui.css */
+    .game-layout {
+        padding: 0.5rem 0.65rem max(0.5rem, env(safe-area-inset-bottom));
+        gap: 0.4rem;
+    }
+
+    .game-main {
+        min-height: 0;
+    }
+
+    .game-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .game-header-brand {
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 0.35rem;
+    }
+
+    .game-title {
+        font-size: clamp(0.95rem, 3.8vw, 1.35rem);
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .game-header-actions,
+    .game-header-actions--wide {
+        flex: 0 1 auto;
+        justify-content: flex-end;
+        gap: 0.4rem;
+    }
+
+    .signature-link.hide-on-compact {
+        display: none;
+    }
+
+    /* HUD typography — layout in game-ui.css */
+    .hud-label {
+        font-size: 0.68rem;
+    }
+
+    .hud-value {
+        font-size: 0.95rem;
+    }
+
+    /* Battle — arena/fighters only; grid shell in game-ui.css */
+    .battle-header h2 {
+        font-size: 1.05rem !important;
+    }
+
+    .battle-arena {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem;
+    }
+
+    .vs-divider-badge {
+        margin: 0 auto;
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+
+    .fighter-card {
+        padding: 0.75rem 1rem;
+    }
+
+    .fighter-name {
+        font-size: 1rem;
+    }
+
+    /* Dialogue typography */
+    .vn-nameplate {
+        margin-left: 0.75rem;
+        padding: 0.35rem 1rem;
+        flex-wrap: wrap;
+        max-width: calc(100% - 1rem);
+    }
+
+    .nameplate-title {
+        font-size: 1rem;
+    }
+
+    .nameplate-tag {
+        display: none;
+    }
+
+    .vn-dialogue-card {
+        padding: 1.1rem 1rem 0.85rem !important;
+        min-height: 110px;
+    }
+
+    .narrator-card-style {
+        padding: 1.25rem 1rem 0.85rem !important;
+    }
+
+    .vn-dialogue-text {
+        font-size: 1rem;
+        line-height: 1.55;
+    }
+
+    .text-centered-narrator {
+        font-size: 1.05rem !important;
+    }
+
+    .vn-dialogue-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .btn-vn-control {
+        min-height: 40px;
+        padding: 0.45rem 0.75rem;
+    }
+
+    /* Event card */
+    .event-card-container {
+        width: 94%;
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+    }
+
+    .event-card-wrapper {
+        padding: 1.15rem !important;
+    }
+
+    /* Landing page */
+    .landing-page-container {
+        padding: 0 0.65rem;
+    }
+
+    .hero-section {
+        min-height: 70vh;
+        padding: 2rem 0 3rem;
+    }
+
+    .landing-title {
+        font-size: clamp(1.75rem, 8vw, 2.5rem) !important;
+    }
+
+    .landing-subtitle {
+        font-size: clamp(0.95rem, 3.5vw, 1.15rem) !important;
+        padding: 0 0.25rem;
+    }
+
+    .btn-hero {
+        width: 100%;
+        max-width: 320px;
+        min-height: 48px;
+    }
+
+    .section-title {
+        font-size: clamp(1.35rem, 5vw, 1.85rem) !important;
+    }
+
+    .section-desc {
+        font-size: 1rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .landing-section {
+        padding: 2.5rem 0;
+    }
+
+    .circle-portrait-frame {
+        width: 140px !important;
+        height: 140px !important;
+    }
+
+    .char-description {
+        max-width: 100% !important;
+    }
+
+    /* Cinematic loader */
+    .loader-left-content {
+        top: max(3vh, env(safe-area-inset-top, 3vh));
+        left: 4vw;
+        width: 92vw;
+        gap: 0.85rem;
+    }
+
+    .loader-game-title {
+        font-size: clamp(1.35rem, 6vw, 1.85rem);
+    }
+
+    .loader-status-heading {
+        font-size: 0.9rem;
+        letter-spacing: 0.3em;
+    }
+
+    .loader-ring-hero {
+        width: 96px;
+        height: 96px;
+        margin-left: 0;
+    }
+
+    .loader-tip-box-wrapper {
+        bottom: max(6vh, env(safe-area-inset-bottom, 6vh));
+        left: 4vw;
+        width: 92vw;
+        padding: 0.85rem 1rem;
+    }
+
+    /* Quick menu: horizontal scroll, icon-first */
+    .quick-menu-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: min(calc(100vw - 1.5rem), 100%);
+        padding: 0.25rem 0.35rem;
+        gap: 0.3rem;
+    }
+
+    .quick-menu-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .quick-menu-bar .quick-menu-label {
+        display: none;
+    }
+
+    .quick-menu-bar .btn-quick-icon {
+        flex-shrink: 0;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
+        justify-content: center;
+    }
+
+    /* Modals shared */
+    .pause-banner-wrapper {
+        top: max(12px, env(safe-area-inset-top, 12px));
+    }
+
+    .pause-banner {
+        font-size: 0.82rem;
+        padding: 0.35rem 1rem;
+    }
+}
+
+/* ==============================================================
+   LARGE PHONE (≤ 640px)
+   ============================================================== */
+@media (max-width: 640px) {
+    .game-header {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .game-header-actions--wide {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dialogue-box {
+        padding: 1rem;
+        min-height: 160px;
+    }
+
+    .speaker-name {
+        font-size: 1.05rem;
+    }
+
+    .dialogue-text {
+        font-size: 1rem;
+    }
+}
+
+/* ==============================================================
+   SMALL PHONE (≤ 480px)
+   ============================================================== */
+@media (max-width: 480px) {
+    .game-layout,
+    .landing-layout {
+        padding-left: max(0.5rem, env(safe-area-inset-left));
+        padding-right: max(0.5rem, env(safe-area-inset-right));
+    }
+
+    .game-title {
+        font-size: 0.92rem;
+        letter-spacing: 0.02em;
+    }
+
+    .modal-content-card {
+        padding: 1rem !important;
+        gap: 1rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 100% !important;
+    }
+
+    .btn-fantasy,
+    button.btn-fantasy {
+        min-height: 48px;
+        padding: 0.85rem 1rem !important;
+        font-size: 0.95rem !important;
+        width: 100%;
+    }
+
+    .actions-grid .btn-fantasy {
+        width: 100%;
+    }
+
+    .input-fantasy,
+    .glass-input {
+        min-height: 48px;
+        font-size: 16px; /* prevents iOS zoom on focus */
+    }
+
+    .signature-link {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.65rem;
+    }
+
+    .hero-portrait-frame {
+        height: 160px !important;
+    }
+
+    .character-selection-window {
+        width: 100% !important;
+        max-height: calc(100dvh - 1.5rem);
+        overflow-y: auto !important;
+    }
+
+    .toast-achievement {
+        flex-direction: column;
+        text-align: center;
+        padding: 0.85rem 1rem;
+        gap: 0.65rem;
+    }
+
+    .floating-damage {
+        font-size: 1.6rem;
+    }
+
+    .vn-continue-indicator span:first-child {
+        display: none;
+    }
+
+    .room-tag {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.55rem;
+    }
+}
+
+/* Touch devices: reduce hover transforms that stick after tap */
+@media (hover: none) and (pointer: coarse) {
+    .btn-fantasy:hover,
+    button:hover,
+    .btn-quick-icon:hover,
+    .choice-interactive-card:hover,
+    .glass-card:hover,
+    .signature-link:hover,
+    .hero-card:hover,
+    .steam-char-card:hover {
+        transform: none;
+    }
+
+    .choice-interactive-card:active {
+        transform: scale(0.98);
+        opacity: 0.92;
+    }
+
+    .btn-fantasy:active,
+    .btn-quick-icon:active {
+        transform: scale(0.97);
+    }
+}
+
+/* Landscape phone: compress vertical spacing */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: 1.5rem 0;
+    }
+
+    .hero-scroll-indicator {
+        display: none;
+    }
+
+    .hud-wrapper {
+        display: none;
+    }
+
+    .battle-logs-container {
+        height: 52px;
+        max-height: 52px;
+        min-height: 52px;
+    }
+
+    .vn-dialogue-wrapper.mode-center-narrator {
+        top: 45%;
+    }
+
+    .loader-left-content {
+        top: 2vh;
+        transform: scale(0.88);
+        transform-origin: top left;
+    }
+
+    .loader-tip-box-wrapper {
+        display: none;
+    }
+}

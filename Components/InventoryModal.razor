@@ -1,0 +1,119 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@implements IDisposable
+
+<div class="modal-backdrop animate-fade-in" @onclick="Close">
+    <!-- GAME PAUSED Banner Indicator -->
+    <div class="pause-banner-wrapper">
+        <div class="pause-banner">
+            <span><SvgIcon Name="pause" Size="1rem" Color="var(--color-warning)" /> GAME PAUSED</span>
+        </div>
+    </div>
+
+    <!-- Inventory Window - Slide From Left Animation -->
+    <div class="glass-panel modal-content-card anim-slide-left" style="max-width: 650px;" @onclick:stopPropagation="true">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h2 class="font-heading" style="color: var(--accent-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <SvgIcon Name="inventory" Size="1.4rem" Color="var(--accent-primary)" /> @GameEngine.Player.Name's Arsenal & Inventory
+            </h2>
+            <button class="btn-quick-icon" @onclick="Close">
+                <SvgIcon Name="close" Size="1.1rem" />
+            </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; text-align: left;">
+            <div class="glass-card">
+                <SvgIcon Name="sword" Size="2rem" Color="var(--accent-primary)" />
+                <div style="font-weight: 700; font-family: var(--font-heading); color: var(--accent-primary); margin-top: 0.5rem;">Royal Sword</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Melee Weapon</div>
+                <div style="font-size: 0.9rem; color: var(--color-success); margin-top: 0.5rem;">DMG: 10 - 15</div>
+            </div>
+
+            <div class="glass-card">
+                <SvgIcon Name="target" Size="2rem" Color="var(--color-warning)" />
+                <div style="font-weight: 700; font-family: var(--font-heading); color: var(--accent-primary); margin-top: 0.5rem;">Flintlock Gun</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Ranged Weapon</div>
+                <div style="font-size: 0.9rem; color: var(--color-warning); margin-top: 0.5rem;">Ammo: @GameEngine.Player.Ammo | DMG: 20 - 25</div>
+            </div>
+
+            <div class="glass-card">
+                <SvgIcon Name="shield" Size="2rem" Color="var(--accent-primary)" />
+                <div style="font-weight: 700; font-family: var(--font-heading); color: var(--accent-primary); margin-top: 0.5rem;">Iron Shield</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Defense Gear</div>
+                <div style="font-size: 0.9rem; color: var(--accent-primary); margin-top: 0.5rem;">Shield: @GameEngine.Player.Shield</div>
+            </div>
+
+            <div class="glass-card">
+                <SvgIcon Name="coins" Size="2rem" Color="var(--color-warning)" />
+                <div style="font-weight: 700; font-family: var(--font-heading); color: var(--accent-primary); margin-top: 0.5rem;">Gold Coins</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Currency</div>
+                <div style="font-size: 0.9rem; color: var(--color-warning); margin-top: 0.5rem;">Balance: @GameEngine.Player.Coins</div>
+            </div>
+        </div>
+
+        <div style="text-align: left; margin-top: 1rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+            <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Story Key Items:</div>
+            <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                <span class="glass-card" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <SvgIcon Name="potion" Size="1rem" Color="var(--color-warning)" /> Dragon Fruit Password
+                </span>
+                <span class="glass-card" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <SvgIcon Name="chain" Size="1rem" Color="var(--accent-primary)" /> Broken Iron Chains
+                </span>
+            </div>
+        </div>
+
+        <button class="btn-fantasy" style="margin-top: 1.5rem; width: 100%;" @onclick="Close">Resume Game</button>
+    </div>
+</div>
+
+<style>
+    .pause-banner-wrapper {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10005;
+        pointer-events: none;
+    }
+
+    .pause-banner {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--color-warning);
+        border-radius: 20px;
+        padding: 0.4rem 1.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--color-warning);
+        letter-spacing: 0.1em;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameEngine.PauseGame();
+        await AudioService.PlayModalOpenAsync();
+    }
+
+    public void Dispose()
+    {
+        GameEngine.ResumeGame();
+    }
+
+    private async Task Close()
+    {
+        await AudioService.PlayModalCloseAsync();
+        GameEngine.ResumeGame();
+        await OnClose.InvokeAsync();
+    }
+}

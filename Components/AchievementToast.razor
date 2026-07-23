@@ -1,0 +1,50 @@
+@using AdventureGameWeb.Services
+@using AdventureGameWeb.Models
+@inject AchievementService AchievementService
+@inject AudioService AudioService
+@implements IDisposable
+
+@if (currentToast != null)
+{
+    <div class="toast-achievement portal-transition">
+        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.8));">
+            @currentToast.Icon
+        </div>
+        <div>
+            <div style="font-size: 0.75rem; color: var(--color-warning); text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;">
+                Achievement Unlocked!
+            </div>
+            <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-main);">
+                @currentToast.Title
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                @currentToast.Description
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Achievement? currentToast;
+
+    protected override void OnInitialized()
+    {
+        AchievementService.OnAchievementUnlocked += HandleAchievementUnlocked;
+    }
+
+    public void Dispose()
+    {
+        AchievementService.OnAchievementUnlocked -= HandleAchievementUnlocked;
+    }
+
+    private async void HandleAchievementUnlocked(Achievement achievement)
+    {
+        currentToast = achievement;
+        await AudioService.PlayAchievementUnlockAsync();
+        StateHasChanged();
+
+        await Task.Delay(4200);
+        currentToast = null;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,23 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<canvas id="particleCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1;"></canvas>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("particleEngine.init", "particleCanvas");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("particleEngine.stop");
+        }
+        catch { }
+    }
+}

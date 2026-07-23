@@ -1,0 +1,270 @@
+@using AdventureGameWeb.Services
+@using AdventureGameWeb.Engine
+@inject AudioService AudioService
+@inject LocalStorageService StorageService
+@inject IGameEngineService GameEngine
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+@inject UiStateService UiState
+
+<div class="modal-backdrop animate-fade-in" @onclick="Close">
+    <!-- GAME PAUSED Banner Indicator -->
+    <div class="pause-banner-wrapper">
+        <div class="pause-banner">
+            <span><SvgIcon Name="pause" Size="1rem" Color="var(--color-warning)" /> GAME PAUSED</span>
+        </div>
+    </div>
+
+    <!-- Settings Window - Drop From Top Animation -->
+    <div class="glass-panel modal-content-card anim-drop-top" style="max-width: 580px;" @onclick:stopPropagation="true">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h2 class="font-heading" style="color: var(--accent-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <SvgIcon Name="settings" Size="1.4rem" Color="var(--accent-primary)" /> Game Settings
+            </h2>
+            <button class="btn-quick-icon" @onclick="Close">
+                <SvgIcon Name="close" Size="1.1rem" />
+            </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.1rem; margin-top: 1rem; text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+            
+            <!-- Master Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="volume" Size="1rem" Color="var(--accent-primary)" /> Master Volume
+                    </span>
+                    <span>@((int)(audioSettings.Master * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Master" @oninput="UpdateMaster" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <!-- Music Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">🎵 Music Volume</span>
+                    <span>@((int)(audioSettings.Music * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Music" @oninput="UpdateMusic" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <!-- SFX Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">
+                        <SvgIcon Name="sword" Size="1rem" Color="var(--accent-primary)" /> Sound Effects (SFX)
+                    </span>
+                    <span>@((int)(audioSettings.Sfx * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Sfx" @oninput="UpdateSfx" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <!-- Ambient Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">🌲 Environmental Ambience</span>
+                    <span>@((int)(audioSettings.Ambient * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Ambient" @oninput="UpdateAmbient" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <!-- UI Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">🖥️ UI Interface Sounds</span>
+                    <span>@((int)(audioSettings.Ui * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Ui" @oninput="UpdateUi" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <!-- Voice Volume -->
+            <div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 0.4rem;">🗣️ Dialogue & Voice Ticks</span>
+                    <span>@((int)(audioSettings.Voice * 100))%</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value="@audioSettings.Voice" @oninput="UpdateVoice" @onchange="SaveSettings" style="width: 100%; margin-top: 0.3rem; accent-color: var(--accent-primary);" />
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6); padding: 0.85rem; border-radius: 8px; margin-top: 0.5rem;">
+                <span>Toggle Fullscreen Display</span>
+                <button class="btn-fantasy" style="font-size: 0.85rem; padding: 0.4rem 0.85rem;" @onclick="ToggleFullscreen">
+                    <SvgIcon Name="fullscreen" Size="1rem" /> Fullscreen
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            @if (!UiState.IsLandingPage)
+            {
+                <div style="border-top: 1px solid var(--border-light); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+                    <button class="btn-fantasy btn-success" style="width: 100%; justify-content: center; gap: 0.5rem;" @onclick="ReturnToHome">
+                        <SvgIcon Name="home" Size="1.1rem" /> Return to Home Launcher
+                    </button>
+
+                    <button class="btn-fantasy btn-danger" style="width: 100%; justify-content: center; gap: 0.5rem;" @onclick="ResetProgress">
+                        <SvgIcon Name="reset" Size="1.1rem" /> Reset Game Progress
+                    </button>
+                </div>
+            }
+        </div>
+
+        @if (!UiState.IsLandingPage)
+        {
+            <button class="btn-fantasy btn-success" style="width: 100%; margin-top: 1.25rem; justify-content: center; gap: 0.5rem;" @onclick="Close">
+                <SvgIcon Name="check" Size="1.1rem" /> Save Settings & Resume
+            </button>
+        }
+        else
+        {
+            <button class="btn-fantasy btn-success" style="width: 100%; margin-top: 1.25rem; justify-content: center; gap: 0.5rem;" @onclick="Close">
+                <SvgIcon Name="check" Size="1.1rem" /> Save Settings & Close
+            </button>
+        }
+    </div>
+</div>
+
+<style>
+    .pause-banner-wrapper {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10005;
+        pointer-events: none;
+    }
+
+    .pause-banner {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--color-warning);
+        border-radius: 20px;
+        padding: 0.4rem 1.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--color-warning);
+        letter-spacing: 0.1em;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnReturnToHome { get; set; }
+
+    private AudioSettingsModel audioSettings = new AudioSettingsModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameEngine.PauseGame();
+        await AudioService.PlayModalOpenAsync();
+        audioSettings = await StorageService.LoadAudioSettingsAsync();
+        await AudioService.SetAllVolumesAsync(audioSettings.Master, audioSettings.Music, audioSettings.Sfx, audioSettings.Ambient, audioSettings.Ui, audioSettings.Voice);
+    }
+
+    public void Dispose()
+    {
+        GameEngine.ResumeGame();
+    }
+
+    private async Task UpdateMaster(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Master = val;
+            await AudioService.SetMasterVolumeAsync(val);
+        }
+    }
+
+    private async Task UpdateMusic(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Music = val;
+            await AudioService.SetMusicVolumeAsync(val);
+        }
+    }
+
+    private async Task UpdateSfx(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Sfx = val;
+            await AudioService.SetSfxVolumeAsync(val);
+        }
+    }
+
+    private async Task UpdateAmbient(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Ambient = val;
+            await AudioService.SetAmbientVolumeAsync(val);
+        }
+    }
+
+    private async Task UpdateUi(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Ui = val;
+            await AudioService.SetUiVolumeAsync(val);
+        }
+    }
+
+    private async Task UpdateVoice(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+        {
+            audioSettings.Voice = val;
+            await AudioService.SetVoiceVolumeAsync(val);
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        await StorageService.SaveAudioSettingsAsync(audioSettings);
+    }
+
+    private async Task ToggleFullscreen()
+    {
+        await AudioService.PlayClickAsync();
+        await StorageService.ToggleFullscreenAsync();
+    }
+
+    private async Task ReturnToHome()
+    {
+        await AudioService.PlayClickAsync();
+        await Close();
+        
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("triggerCinematicReturnToHome");
+        }
+        catch { }
+
+        GameEngine.RestartGame();
+        UiState.SetLandingPage(true);
+        if (OnReturnToHome.HasDelegate)
+        {
+            await OnReturnToHome.InvokeAsync();
+        }
+    }
+
+    private async Task ResetProgress()
+    {
+        await AudioService.PlayClickAsync();
+        GameEngine.RestartGame();
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        await SaveSettings();
+        await AudioService.PlayModalCloseAsync();
+        GameEngine.ResumeGame();
+        await OnClose.InvokeAsync();
+    }
+}

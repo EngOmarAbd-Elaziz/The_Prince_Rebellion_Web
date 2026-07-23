@@ -1,0 +1,317 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@inject LocalStorageService LocalStorageService
+@inject PlayerSessionService PlayerSession
+
+<div class="modal-backdrop animate-fade-in" style="padding: 1rem; overflow: hidden;">
+    <div class="glass-panel modal-content-card anim-drop-top character-selection-window"
+         style="max-width: 620px; width: 92%; overflow: hidden; padding: 1.25rem 1.5rem !important; position: relative;">
+
+        <div
+            style="text-align: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 34px;"></div> <!-- Spacer for centering -->
+            <div>
+                <h2 class="font-heading"
+                    style="color: var(--accent-primary); font-size: 1.6rem; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <SvgIcon Name="crown" Size="1.4rem" Color="var(--accent-primary)" /> CHOOSE YOUR DESTINY
+                </h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    Select your protagonist hero and forge your legacy in the rebellion.
+                </p>
+            </div>
+
+            <!-- Close 'X' Button -->
+            <button type="button" class="btn-modal-close-x" title="Close Window" @onclick="CloseModal"
+                    @onclick:stopPropagation="true" style="position: static; margin-top: -30px;">
+                <SvgIcon Name="close" Size="1.1rem" Color="#F8FAFC" />
+            </button>
+        </div>
+
+        <!-- Hero Selection Cards Grid -->
+        <div class="hero-selection-grid">
+
+            <!-- Prince Selection Card -->
+            <div class="hero-card @(selectedHero == "Prince" ? "selected-hero-cyan" : "")"
+                 @onclick='() => SelectHero("Prince")' @onmouseenter="PlayHover">
+                <div class="hero-portrait-frame">
+                    <img src="images/prince.png" alt="Prince" class="hero-img" />
+                    <div class="hero-card-glow"></div>
+                </div>
+                <div class="hero-info">
+                    <h3 class="hero-title" style="color: #38BDF8;">THE PRINCE</h3>
+                    <span class="hero-badge" style="border-color: #38BDF8; color: #38BDF8;">REBEL PROTAGONIST</span>
+                    <p class="hero-desc">
+                        Refuses to accept tyranny and leads the royal coup against his father.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Princess Selection Card -->
+            <div class="hero-card @(selectedHero == "Princess" ? "selected-hero-rose" : "")"
+                 @onclick='() => SelectHero("Princess")' @onmouseenter="PlayHover">
+                <div class="hero-portrait-frame">
+                    <img src="images/princess.png" alt="Princess" class="hero-img" />
+                    <div class="hero-card-glow"></div>
+                </div>
+                <div class="hero-info">
+                    <h3 class="hero-title" style="color: #F43F5E;">THE PRINCESS</h3>
+                    <span class="hero-badge" style="border-color: #F43F5E; color: #F43F5E;">ROYAL WARRIOR</span>
+                    <p class="hero-desc">
+                        A formidable royal strategist determined to shatter the kingdom's chains.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Username (Leaderboard Name) Section - REQUIRED -->
+        <div class="name-input-box"
+             style="margin-top: 0.75rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
+            <label
+                style="font-weight: 700; font-size: 0.85rem; color: var(--accent-primary); display: flex; align-items: center; gap: 0.4rem;">
+                <SvgIcon Name="achievements" Size="0.9rem" Color="var(--accent-primary)" />
+                Player Name <span style="color: var(--color-danger);">*</span>
+                <span
+                    style="font-weight: 400; font-size: 0.77rem; color: var(--text-muted); margin-left: 0.25rem;">(required
+                    for Leaderboard)</span>
+                </label>
+                <input type="text" class="glass-input" placeholder="Enter your display name..." @bind="userName"
+                       @bind:event="oninput" maxlength="20"
+                       style="width: 100%; padding: 0.65rem 1rem; font-size: 0.95rem; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid @(_showUserNameError ? "var(--color-danger)" : "var(--accent-primary)"); color: #FFF; box-shadow: 0 0 8px @(_showUserNameError ? "rgba(239,68,68,0.3)" : "rgba(56,189,248,0.2)");" />
+                @if (_showUserNameError)
+                {
+                    <span
+                        style="font-size: 0.78rem; color: var(--color-danger); display: flex; align-items: center; gap: 0.3rem;">
+                        ⚠ Player name is required to participate in the leaderboard.
+                    </span>
+                }
+            </div>
+
+            <!-- Character Name Input Section -->
+            <div class="name-input-box"
+                 style="margin-top: 0.5rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
+                <label
+                    style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                    <SvgIcon Name="codex" Size="0.9rem" Color="var(--accent-primary)" /> Character Name (optional):
+                </label>
+                <input type="text" class="glass-input" placeholder="@(selectedHero == "Princess" ? "Princess" : "Prince")"
+                       @bind="inputName" @bind:event="oninput" maxlength="20"
+                       style="width: 100%; padding: 0.65rem 1rem; font-size: 0.95rem; border-radius: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glow); color: #FFF;" />
+            </div>
+
+            <!-- Confirm CTA Button -->
+            <button type="button" class="btn-fantasy btn-success"
+                    style="width: 100%; font-size: 1.05rem; padding: 0.75rem; margin-top: 0.75rem; justify-content: center; gap: 0.5rem;"
+                    @onclick="ConfirmCharacter" @onclick:preventDefault="true" @onclick:stopPropagation="true">
+                <span>CONFIRM HERO & BEGIN REBELLION</span>
+                <SvgIcon Name="arrow-right" Size="1.1rem" />
+            </button>
+
+        </div>
+    </div>
+
+    <style>
+        .btn-modal-close-x {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid var(--border-glow);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            z-index: 20;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-modal-close-x:hover {
+            background: rgba(239, 68, 68, 0.85);
+            border-color: var(--color-danger);
+            transform: scale(1.1);
+        }
+
+        .btn-modal-close-x:hover svg {
+            fill: #FFFFFF !important;
+        }
+
+        .character-selection-window {
+            padding: 1.25rem 1.5rem !important;
+            background: rgba(15, 23, 42, 0.97) !important;
+            border: 1px solid var(--border-glow) !important;
+        }
+
+        .hero-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        @@media (max-width: 640px) {
+            .hero-selection-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hero-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 2px solid var(--border-light);
+            border-radius: 14px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .hero-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .hero-portrait-frame {
+            width: 100%;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-light);
+        }
+
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            transition: transform 0.4s ease;
+        }
+
+        .hero-card:hover .hero-img {
+            transform: scale(1.06);
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 0.2rem 0.65rem;
+            border-radius: 10px;
+            border: 1px solid currentColor;
+            text-transform: uppercase;
+            margin: 0.1rem 0;
+        }
+
+        .hero-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        /* Selected Hero Highlighting */
+        .selected-hero-cyan {
+            border-color: #38BDF8 !important;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.4) !important;
+            background: rgba(56, 189, 248, 0.12) !important;
+        }
+
+        .selected-hero-rose {
+            border-color: #F43F5E !important;
+            box-shadow: 0 0 25px rgba(244, 63, 94, 0.4) !important;
+            background: rgba(244, 63, 94, 0.12) !important;
+        }
+    </style>
+
+@code {
+    [Parameter] public EventCallback OnConfirmed { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string selectedHero = "Prince";
+    private string inputName = string.Empty;
+    private string userName = string.Empty;
+    private bool _showUserNameError = false;
+
+    private async Task PlayHover()
+    {
+        await AudioService.PlayHoverAsync();
+    }
+
+    private async Task SelectHero(string hero)
+    {
+        await AudioService.PlayClickAsync();
+        selectedHero = hero;
+    }
+
+    private async Task CloseModal()
+    {
+        await AudioService.PlayModalCloseAsync();
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task ConfirmCharacter()
+    {
+        // Validate username is required
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            _showUserNameError = true;
+            return;
+        }
+        _showUserNameError = false;
+
+        try
+        {
+            await AudioService.PlayClickAsync();
+        }
+        catch { }
+
+        // Set the leaderboard username on the engine
+        GameEngine.SetUserName(userName.Trim());
+        // Persist player name locally for auto-fill on next session
+        try { await LocalStorageService.SavePlayerNameAsync(userName.Trim()); } catch { }
+
+        string finalName = string.IsNullOrWhiteSpace(inputName) ? selectedHero : inputName.Trim();
+        GameEngine.StartGame(finalName, selectedHero);
+        if (OnConfirmed.HasDelegate)
+        {
+            await OnConfirmed.InvokeAsync();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var username = await PlayerSession.GetCurrentUsernameAsync();
+            if (!string.IsNullOrWhiteSpace(username))
+            {
+                userName = username;
+            }
+        }
+        catch { }
+    }
+}

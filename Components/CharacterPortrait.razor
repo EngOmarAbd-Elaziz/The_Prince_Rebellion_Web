@@ -1,0 +1,112 @@
+@code {
+    [Parameter] public string Speaker { get; set; } = string.Empty;
+    [Parameter] public bool IsTalking { get; set; } = true;
+}
+
+<div class="portrait-container @(IsTalking ? "talking-portrait" : "") @GetSpeakerThemeClass()">
+    @if (Speaker == "Prince" || Speaker == "The Prince")
+    {
+        <img src="images/prince.png" alt="Prince" class="portrait-img-avatar" />
+    }
+    else if (Speaker == "Queen")
+    {
+        <img src="images/queen.png" alt="Queen" class="portrait-img-avatar" />
+    }
+    else if (Speaker == "Jack")
+    {
+        <img src="images/jack.png" alt="Jack" class="portrait-img-avatar" />
+    }
+    else if (Speaker == "The King")
+    {
+        <img src="images/king.png" alt="The King" class="portrait-img-avatar" />
+    }
+    else
+    {
+        <!-- SVG Fallback for other characters -->
+        <svg viewBox="0 0 100 100" class="portrait-svg">
+            <circle cx="50" cy="50" r="40" fill="#1E293B" stroke="#334155" stroke-width="2" />
+            @if (Speaker == "The Seller")
+            {
+                <path d="M 25 50 Q 50 20 75 50 Z" fill="#78350F" />
+                <circle cx="50" cy="55" r="18" fill="#FDBA74" />
+                <circle cx="43" cy="53" r="2" fill="#000" />
+                <circle cx="57" cy="53" r="2" fill="#000" />
+            }
+            else if (Speaker == "Ash" || Speaker == "Loge" || Speaker == "Tom")
+            {
+                <path d="M 25 45 Q 50 25 75 45 L 80 80 L 20 80 Z" fill="#334155" />
+                <circle cx="50" cy="52" r="17" fill="#FED7AA" />
+                <circle cx="43" cy="50" r="2" fill="#1E293B" />
+                <circle cx="57" cy="50" r="2" fill="#1E293B" />
+            }
+            else if (Speaker == "King's assistant")
+            {
+                <path d="M 25 40 Q 50 20 75 40 L 75 65 Q 50 80 25 65 Z" fill="#18181B" stroke="#EF4444" stroke-width="1.5" />
+                <circle cx="40" cy="48" r="4" fill="#EF4444" />
+                <circle cx="60" cy="48" r="4" fill="#EF4444" />
+            }
+            else if (Speaker == "Ship Captain" || Speaker == "Guard")
+            {
+                <path d="M 30 40 Q 50 20 70 40 L 70 52 L 30 52 Z" fill="#475569" stroke="#94A3B8" stroke-width="1.5" />
+                <circle cx="50" cy="56" r="17" fill="#FDBA74" />
+            }
+            else if (Speaker == "Wild Animal")
+            {
+                <polygon points="30,45 20,20 40,35" fill="#78350F" />
+                <polygon points="70,45 80,20 60,35" fill="#78350F" />
+                <circle cx="50" cy="55" r="20" fill="#9A3412" />
+            }
+            else
+            {
+                <circle cx="50" cy="52" r="18" fill="#FED7AA" />
+                <circle cx="43" cy="50" r="2.5" fill="#1E293B" />
+                <circle cx="57" cy="50" r="2.5" fill="#1E293B" />
+            }
+        </svg>
+    }
+</div>
+
+@code {
+    private string GetSpeakerThemeClass()
+    {
+        if (Speaker == "Queen") return "border-queen";
+        if (Speaker == "Jack") return "border-jack";
+        if (Speaker == "The King") return "border-king";
+        return "border-prince";
+    }
+}
+
+<style>
+    .portrait-container {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(30, 41, 59, 0.8);
+        border: 2px solid var(--accent-primary);
+        padding: 2px;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .border-prince { border-color: #38BDF8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+    .border-queen { border-color: #FACC15; box-shadow: 0 0 12px rgba(250, 204, 21, 0.4); }
+    .border-jack { border-color: #EF4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+    .border-king { border-color: #A855F7; box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
+
+    .portrait-img-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .portrait-svg {
+        width: 100%;
+        height: 100%;
+    }
+</style>

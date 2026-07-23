@@ -1,0 +1,76 @@
+@using AdventureGameWeb.Engine
+@inject IGameEngineService GameEngine
+
+<div class="glass-panel hud-container animate-fade-in">
+    <div class="hud-item">
+        <div class="hud-label">
+            <span>Health (HP)</span>
+            <span>@GameEngine.Player.Health / @GameEngine.PlayerMaxHealth</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-health" style="width: @(GetHealthPercentage())%;"></div>
+        </div>
+    </div>
+
+    <div class="hud-item">
+        <div class="hud-label">
+            <span>Shield</span>
+            <span>@GameEngine.Player.Shield</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-shield" style="width: @(GetShieldPercentage())%;"></div>
+        </div>
+    </div>
+
+    <div class="hud-item">
+        <div class="hud-label">
+            <span>Ammo</span>
+        </div>
+        <div class="hud-value" style="color: var(--color-warning);">
+            @GameEngine.Player.Ammo
+        </div>
+    </div>
+
+    <div class="hud-item">
+        <div class="hud-label">
+            <span>Coins</span>
+        </div>
+        <div class="hud-value" style="color: var(--color-warning);">
+            @GameEngine.Player.Coins
+        </div>
+    </div>
+
+    <div class="hud-item hud-item--wide">
+        <div class="hud-label">
+            <span>Tied Prisoners</span>
+        </div>
+        <div class="hud-value hud-prisoners" style="color: @(GameEngine.Player.PrisonersRemaining <= 0 ? "var(--color-success)" : "var(--color-danger)");">
+            @GameEngine.Player.PrisonersRemaining <span class="hud-prisoners-suffix">Remaining</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+    }
+
+    private int GetHealthPercentage()
+    {
+        if (GameEngine.PlayerMaxHealth <= 0) return 0;
+        int pct = (GameEngine.Player.Health * 100) / GameEngine.PlayerMaxHealth;
+        return Math.Clamp(pct, 0, 100);
+    }
+
+    private int GetShieldPercentage()
+    {
+        int pct = (GameEngine.Player.Shield * 100) / 200;
+        return Math.Clamp(pct, 0, 100);
+    }
+}

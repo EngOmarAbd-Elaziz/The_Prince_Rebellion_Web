@@ -1,0 +1,242 @@
+@using AdventureGameWeb.Services
+@using AdventureGameWeb.Models
+@inject ScoreService ScoreService
+@inject PlayerSessionService PlayerSession
+@inject AudioService AudioService
+
+<div class="modal-backdrop animate-fade-in leaderboard-backdrop" @onclick="Close">
+    <div class="glass-panel modal-content-card anim-drop-top leaderboard-modal"
+         @onclick:stopPropagation="true">
+
+        <!-- Header -->
+        <div class="leaderboard-header">
+            <h2 class="font-heading leaderboard-title">
+                <SvgIcon Name="crown" Size="1.5rem" Color="var(--color-warning)" />
+                HALL OF LEGENDS
+            </h2>
+            <div class="leaderboard-header-actions">
+                <button class="btn-fantasy btn-leaderboard-refresh" @onclick="Refresh" disabled="@_isLoading">
+                    @(_isLoading ? "Loading..." : "↻ Refresh")
+                </button>
+                <button class="btn-quick-icon" @onclick="Close" aria-label="Close leaderboard">
+                    <SvgIcon Name="close" Size="1.1rem" />
+                </button>
+            </div>
+        </div>
+
+        @if (_isLoading)
+        {
+            <div class="leaderboard-loading">
+                <div class="spinner-container spinner-container--modal" aria-hidden="true">
+                    <div class="outer-rune-ring"></div>
+                </div>
+                <p>Loading leaderboard...</p>
+            </div>
+        }
+        else
+        {
+            <!-- Player Dashboard / Profile Stats -->
+            <div class="player-dashboard-card">
+                <div class="player-dashboard-header">
+                    <span class="player-dashboard-label">Your Profile</span>
+                    @if (!string.IsNullOrWhiteSpace(_currentUsername))
+                    {
+                        <span class="player-dashboard-name">@_currentUsername</span>
+                    }
+                    else
+                    {
+                        <span class="player-dashboard-name player-dashboard-name--guest">Guest</span>
+                    }
+                </div>
+                <div class="player-stats-grid player-stats-grid--compact">
+                    <div class="player-stat-item">
+                        <span class="player-stat-label">High Score</span>
+                        <span class="player-stat-value player-stat-value--score">@_playerProfile.HighScore</span>
+                    </div>
+                    <div class="player-stat-item">
+                        <span class="player-stat-label">Last Updated</span>
+                        <span class="player-stat-value">@FormatLastUpdated(_playerProfile.LastUpdated)</span>
+                    </div>
+                    @if (_playerRank.HasValue)
+                    {
+                        <div class="player-stat-item">
+                            <span class="player-stat-label">Global Rank</span>
+                            <span class="player-stat-value">#@_playerRank</span>
+                        </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_currentUsername) && _playerProfile.HighScore > 0)
+                    {
+                        <div class="player-stat-item">
+                            <span class="player-stat-label">Global Rank</span>
+                            <span class="player-stat-value">Outside Top 10</span>
+                        </div>
+                    }
+                </div>
+                @if (string.IsNullOrWhiteSpace(_currentUsername))
+                {
+                    <p class="player-dashboard-hint">Enter a player name when starting a game to track your scores on the leaderboard.</p>
+                }
+            </div>
+
+            @if (_entries.Count == 0)
+            {
+                <div class="leaderboard-empty">
+                    <p class="leaderboard-empty-icon">🏆</p>
+                    <p>No champions yet. Be the first to conquer the rebellion!</p>
+                </div>
+            }
+            else
+            {
+                <!-- Desktop / tablet table -->
+                <div class="leaderboard-table-wrap hide-mobile-table">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>High Score</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < _entries.Count; i++)
+                            {
+                                var entry = _entries[i];
+                                var rank = i + 1;
+                                var isCurrentPlayer = IsCurrentPlayer(entry);
+                                <tr class="leaderboard-row @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-row--you" : "")">
+                                    <td class="leaderboard-rank">@GetRankIcon(rank)</td>
+                                    <td>
+                                        <span class="leaderboard-player-name">
+                                            @entry.Username
+                                            @if (isCurrentPlayer)
+                                            {
+                                                <span class="leaderboard-you-badge">YOU</span>
+                                            }
+                                        </span>
+                                    </td>
+                                    <td class="leaderboard-score">@entry.HighScore</td>
+                                    <td class="leaderboard-time">@FormatLastUpdated(entry.LastUpdated)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile card list -->
+                <div class="leaderboard-cards show-mobile-table">
+                    @for (int i = 0; i < _entries.Count; i++)
+                    {
+                        var entry = _entries[i];
+                        var rank = i + 1;
+                        var isCurrentPlayer = IsCurrentPlayer(entry);
+                        <div class="leaderboard-card @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-card--you" : "")">
+                            <div class="leaderboard-card-top">
+                                <span class="leaderboard-rank">@GetRankIcon(rank)</span>
+                                <div class="leaderboard-card-player">
+                                    <span class="leaderboard-player-name">@entry.Username</span>
+                                    @if (isCurrentPlayer)
+                                    {
+                                        <span class="leaderboard-you-badge">YOU</span>
+                                    }
+                                </div>
+                                <span class="leaderboard-score">@entry.HighScore</span>
+                            </div>
+                            <div class="leaderboard-card-meta">
+                                <span>Updated @FormatLastUpdated(entry.LastUpdated)</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <p class="leaderboard-footer-note">
+                    Top 10 unique players ranked by highest score (descending)
+                </p>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private List<UserScore> _entries = new();
+    private UserScore _playerProfile = ScoreService.CreateEmptyProfile(string.Empty);
+    private string _currentUsername = string.Empty;
+    private int? _playerRank;
+    private bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AudioService.PlayModalOpenAsync();
+        await LoadScoresAsync();
+    }
+
+    private async Task LoadScoresAsync()
+    {
+        _isLoading = true;
+        _playerRank = null;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            _currentUsername = await PlayerSession.GetCurrentUsernameAsync();
+            _entries = await ScoreService.GetTop10ScoresAsync();
+
+            var profile = await PlayerSession.GetCurrentPlayerScoreAsync();
+            _playerProfile = profile ?? ScoreService.CreateEmptyProfile(_currentUsername);
+
+            if (!string.IsNullOrWhiteSpace(_currentUsername))
+            {
+                var rankIndex = _entries.FindIndex(e =>
+                    string.Equals(e.Username, _currentUsername, StringComparison.OrdinalIgnoreCase));
+                if (rankIndex >= 0)
+                {
+                    _playerRank = rankIndex + 1;
+                }
+            }
+        }
+        catch
+        {
+            _entries = new List<UserScore>();
+            _playerProfile = ScoreService.CreateEmptyProfile(_currentUsername);
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task Refresh()
+    {
+        await AudioService.PlayClickAsync();
+        await LoadScoresAsync();
+    }
+
+    private async Task Close()
+    {
+        await AudioService.PlayModalCloseAsync();
+        await OnClose.InvokeAsync();
+    }
+
+    private bool IsCurrentPlayer(UserScore entry) =>
+        !string.IsNullOrWhiteSpace(_currentUsername) &&
+        string.Equals(entry.Username, _currentUsername, StringComparison.OrdinalIgnoreCase);
+
+    private static string GetRankIcon(int rank) =>
+        rank switch { 1 => "🥇", 2 => "🥈", 3 => "🥉", _ => $"{rank}." };
+
+    private static string GetRankClass(int rank) =>
+        rank switch { 1 => "rank-gold", 2 => "rank-silver", 3 => "rank-bronze", _ => "" };
+
+    private static string FormatLastUpdated(DateTime lastUpdated)
+    {
+        if (lastUpdated == DateTime.MinValue)
+        {
+            return "—";
+        }
+
+        return lastUpdated.ToLocalTime().ToString("MMM dd, yyyy HH:mm");
+    }
+}

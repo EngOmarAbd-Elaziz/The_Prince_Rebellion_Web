@@ -1,0 +1,751 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@inject IJSRuntime JSRuntime
+
+<div class="landing-page-container portal-transition">
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="landing-title">THE PRINCE'S REBELLION</h1>
+            <p class="landing-subtitle">
+                A Dark Fantasy Interactive RPG of Tyranny, Betrayal, and Revolution.
+            </p>
+
+            <div class="cta-button-group"
+                 style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" class="btn-fantasy btn-success btn-hero" @onclick="StartAdventure"
+                        @onclick:preventDefault="true" @onclick:stopPropagation="true">
+                    <span>START ADVENTURE</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="hero-scroll-indicator" role="button" tabindex="0" @onclick="ScrollToStory"
+             @onkeydown="OnScrollIndicatorKeyDown">
+            <span>EXPLORE LORE</span>
+            <div class="scroll-arrow">↓</div>
+        </div>
+    </section>
+
+    <!-- Story Introduction Section -->
+    <section id="story" class="landing-section alt-bg">
+        <div class="section-container">
+            <h2 class="font-heading section-title">THE PROMISED DAY HAS COME</h2>
+            <p class="section-desc">
+                Since the King took absolute control over the realm, destruction, injustice, and cold tyranny have
+                consumed the people. Today, the royal heir and the underground rebellion group take their stand to end
+                the kingdom's reign of terror...
+            </p>
+
+            <div class="features-grid">
+                <div class="glass-card feature-card">
+                    <h3>Royal Betrayal</h3>
+                    <p>Faced with absolute coldness, the protagonist risks execution to end their father's corrupt
+                        reign.</p>
+                    </div>
+                    <div class="glass-card feature-card">
+                        <h3>Prison Ship Breakout</h3>
+                        <p>Sentenced to death on Prisoner Island, forge alliances with allies like Jack to break your
+                            chains.</p>
+                        </div>
+                        <div class="glass-card feature-card">
+                            <h3>Tactical Combat</h3>
+                            <p>Manage Sword strikes, Flintlock ammo, and Shield blocks against ruthless guards and feral beasts.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gameplay Overview Section -->
+            <section class="landing-section">
+                <div class="section-container">
+                    <h2 class="font-heading section-title">GAMEPLAY OVERVIEW</h2>
+                    <p class="section-desc">
+                        Experience dynamic visual novel storytelling paired with turn-based tactical combat and room
+                        exploration.
+                    </p>
+
+                    <div class="overview-grid">
+                        <div class="glass-card overview-card">
+                            <div class="overview-badge">EXPLORATION</div>
+                            <h3>Ship Deck Navigation</h3>
+                            <p>Explore 10 rooms aboard the prisoner transport vessel. Encounter wild beasts, merchant stores,
+                                ammunition caches, and tied prisoners waiting for rescue.</p>
+                            </div>
+
+                            <div class="glass-card overview-card">
+                                <div class="overview-badge">COMBAT</div>
+                                <h3>Turn-Based Battles</h3>
+                                <p>Battle enemy guards, ferocious attack hounds, the Prison Ship Captain, and ultimately face the
+                                    King in an epic final showdown.</p>
+                                </div>
+
+                                <div class="glass-card overview-card">
+                                    <div class="overview-badge">RPG MECHANICS</div>
+                                    <h3>Inventory & Codex</h3>
+                                    <p>Track your health, shield armor, coins, ammo, rescued prisoners, achievements, bestiary lore
+                                        entries, and character profiles in real-time.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Key Characters Showcase Section -->
+                        <section class="landing-section alt-bg">
+                            <div class="section-container" style="max-width: 1280px;">
+                                <h2 class="font-heading section-title"
+                                    style="letter-spacing: 0.15em; font-size: 2.5rem; margin-bottom: 2.5rem;">KEY CHARACTERS</h2>
+
+                                <div class="steam-character-row">
+
+                                    <!-- The Prince -->
+                                    <div class="steam-char-card theme-prince">
+                                        <div class="circle-portrait-frame">
+                                            <img src="images/prince.png" alt="The Prince" class="portrait-img" />
+                                            <div class="circle-border-glow"></div>
+                                            <div class="diamond-accent left"></div>
+                                            <div class="diamond-accent right"></div>
+                                        </div>
+                                        <h3 class="char-name">THE PRINCE</h3>
+                                        <div class="title-divider"><span class="diamond-dot">◆</span></div>
+                                        <span class="char-badge">PROTAGONIST HERO</span>
+                                        <p class="char-description">
+                                            Refuses to accept injustice and leads the coup against his royal father.
+                                        </p>
+                                    </div>
+
+                                    <!-- The Princess -->
+                                    <div class="steam-char-card theme-princess">
+                                        <div class="circle-portrait-frame">
+                                            <img src="images/princess.png" alt="The Princess" class="portrait-img" />
+                                            <div class="circle-border-glow"></div>
+                                            <div class="diamond-accent left"></div>
+                                            <div class="diamond-accent right"></div>
+                                        </div>
+                                        <h3 class="char-name">THE PRINCESS</h3>
+                                        <div class="title-divider"><span class="diamond-dot">◆</span></div>
+                                        <span class="char-badge">ROYAL WARRIOR</span>
+                                        <p class="char-description">
+                                            A fierce royal strategist determined to shatter the kingdom's chains.
+                                        </p>
+                                    </div>
+
+                                    <!-- Queen -->
+                                    <div class="steam-char-card theme-queen">
+                                        <div class="circle-portrait-frame">
+                                            <img src="images/queen.png" alt="Queen" class="portrait-img" />
+                                            <div class="circle-border-glow"></div>
+                                            <div class="diamond-accent left"></div>
+                                            <div class="diamond-accent right"></div>
+                                        </div>
+                                        <h3 class="char-name">QUEEN</h3>
+                                        <div class="title-divider"><span class="diamond-dot">◆</span></div>
+                                        <span class="char-badge">ROYAL MOTHER</span>
+                                        <p class="char-description">
+                                            Warns her child of the grave death penalty awaiting any failed coup.
+                                        </p>
+                                    </div>
+
+                                    <!-- Jack -->
+                                    <div class="steam-char-card theme-jack">
+                                        <div class="circle-portrait-frame">
+                                            <img src="images/jack.png" alt="Jack" class="portrait-img" />
+                                            <div class="circle-border-glow"></div>
+                                            <div class="diamond-accent left"></div>
+                                            <div class="diamond-accent right"></div>
+                                        </div>
+                                        <h3 class="char-name">JACK</h3>
+                                        <div class="title-divider"><span class="diamond-dot">◆</span></div>
+                                        <span class="char-badge">SHIP ALLY</span>
+                                        <p class="char-description">
+                                            A fellow prisoner who helps break chains and seize control of the transport vessel.
+                                        </p>
+                                    </div>
+
+                                    <!-- The King -->
+                                    <div class="steam-char-card theme-king">
+                                        <div class="circle-portrait-frame">
+                                            <img src="images/king.png" alt="The King" class="portrait-img" />
+                                            <div class="circle-border-glow"></div>
+                                            <div class="diamond-accent left"></div>
+                                            <div class="diamond-accent right"></div>
+                                        </div>
+                                        <h3 class="char-name">THE KING</h3>
+                                        <div class="title-divider"><span class="diamond-dot">◆</span></div>
+                                        <span class="char-badge">MAIN VILLAIN</span>
+                                        <p class="char-description">
+                                            A cold ruler with an insurmountable ego and lethal royal guard.
+                                        </p>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Timeline of the Rebellion Section -->
+                        <section class="landing-section">
+                            <div class="section-container">
+                                <h2 class="font-heading section-title">CHRONICLES OF REBELLION</h2>
+                                <div class="timeline-container">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">1</div>
+                                        <div class="timeline-content">
+                                            <h4>The Promised Day</h4>
+                                            <p>The protagonist meets the rebel group in the secret bunker hideout.</p>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">2</div>
+                                        <div class="timeline-content">
+                                            <h4>Royal Betrayal</h4>
+                                            <p>The King's assistant betrays the group, leading to public torture and execution sentences.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot">3</div>
+                                        <div class="timeline-content">
+                                            <h4>Transport Ship Siege</h4>
+                                            <p>Chained on a vessel bound for Prisoner Island, the hero & Jack break free and liberate the
+                                                deck.</p>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-dot">4</div>
+                                            <div class="timeline-content">
+                                                <h4>The Final Revolution</h4>
+                                                <p>Unite the rescued prisoners and citizens to overthrow the tyrant king once and for all.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Technology & Architecture -->
+                            <section class="landing-section alt-bg">
+                                <div class="section-container">
+                                    <h2 class="font-heading section-title">ENGINE & TECHNOLOGY STACK</h2>
+                                    <div class="tech-stack-badges">
+                                        <span class="glass-card tech-badge">C# / .NET 9</span>
+                                        <span class="glass-card tech-badge">Blazor WebAssembly</span>
+                                        <span class="glass-card tech-badge">Web Audio API Engine</span>
+                                        <span class="glass-card tech-badge">HTML5 Canvas Particles</span>
+                                        <span class="glass-card tech-badge">LocalStorage Save Manager</span>
+                                        <span class="glass-card tech-badge">AAA Dark Fantasy Design Tokens</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Footer -->
+                            <footer class="landing-footer">
+                                <div class="footer-content" style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+                                    <div style="font-family: var(--font-heading); font-size: 1.1rem; letter-spacing: 0.05em;">The Prince's
+                                        Rebellion - AAA Web Experience</div>
+
+                                        <a href="https://engomarabd-elaziz.github.io/My-Portofolio/" target="_blank" rel="noopener noreferrer"
+                                           class="signature-link">
+                                            Designed & Developed by Omar Abdelaziz
+                                        </a>
+
+                                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                            100% Logic & Gameplay Preserved from original C# Console Application.
+                                        </div>
+                                    </div>
+                                </footer>
+
+                            </div>
+
+                            <style>
+                                .landing-page-container {
+                                    display: flex;
+                                    flex-direction: column;
+                                    width: 100%;
+                                    max-width: 1400px;
+                                    margin: 0 auto;
+                                    padding: 0 1rem;
+                                    color: var(--text-main);
+                                    position: relative;
+                                    z-index: 2;
+                                }
+
+                                .hero-section {
+                                    min-height: 85vh;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    text-align: center;
+                                    position: relative;
+                                    padding: 3rem 0 4rem;
+                                }
+
+                                .hero-content {
+                                    max-width: 800px;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    gap: 1.25rem;
+                                }
+
+                                .landing-title {
+                                    font-family: var(--font-heading);
+                                    font-size: clamp(2.5rem, 6vw, 4.2rem);
+                                    font-weight: 900;
+                                    color: #FFFFFF;
+                                    letter-spacing: 0.08em;
+                                    text-shadow: 0 0 30px rgba(56, 189, 248, 0.5), 0 5px 15px rgba(0, 0, 0, 0.8);
+                                }
+
+                                .landing-subtitle {
+                                    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+                                    color: var(--accent-primary);
+                                    max-width: 600px;
+                                    line-height: 1.6;
+                                }
+
+                                .btn-hero {
+                                    font-size: 1.25rem;
+                                    padding: 1.1rem 2.5rem;
+                                    border-radius: 14px;
+                                    box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+                                }
+
+                                .hero-scroll-indicator {
+                                    position: absolute;
+                                    bottom: 2rem;
+                                    cursor: pointer;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    gap: 0.3rem;
+                                    font-size: 0.85rem;
+                                    color: var(--text-muted);
+                                    letter-spacing: 0.1em;
+                                    transition: color 0.3s;
+                                }
+
+                                .hero-scroll-indicator:hover {
+                                    color: var(--accent-primary);
+                                }
+
+                                .landing-section {
+                                    padding: 4rem 0;
+                                    width: 100%;
+                                }
+
+                                .alt-bg {
+                                    background: rgba(15, 23, 42, 0.6);
+                                    border-top: 1px solid var(--border-light);
+                                    border-bottom: 1px solid var(--border-light);
+                                }
+
+                                .section-container {
+                                    max-width: 1100px;
+                                    margin: 0 auto;
+                                    padding: 0 1rem;
+                                    text-align: center;
+                                }
+
+                                .section-title {
+                                    font-size: 2.2rem;
+                                    color: var(--accent-primary);
+                                    margin-bottom: 1rem;
+                                }
+
+                                .section-desc {
+                                    font-size: 1.15rem;
+                                    color: var(--text-muted);
+                                    max-width: 750px;
+                                    margin: 0 auto 3rem auto;
+                                    line-height: 1.7;
+                                }
+
+                                .features-grid {
+                                    display: grid;
+                                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                                    gap: 1.5rem;
+                                }
+
+                                .feature-card {
+                                    text-align: left;
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 0.75rem;
+                                }
+
+                                .overview-grid {
+                                    display: grid;
+                                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                                    gap: 1.5rem;
+                                }
+
+                                .overview-card {
+                                    padding: 2rem;
+                                    text-align: left;
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 0.75rem;
+                                }
+
+                                .overview-badge {
+                                    font-size: 0.75rem;
+                                    font-weight: 700;
+                                    letter-spacing: 0.1em;
+                                    color: var(--accent-primary);
+                                    border: 1px solid var(--border-glow);
+                                    padding: 0.25rem 0.75rem;
+                                    border-radius: 8px;
+                                    align-self: flex-start;
+                                }
+
+                                /* STEAM KEY CHARACTERS ROW STYLING */
+                                .steam-character-row {
+                                    display: grid;
+                                    grid-template-columns: repeat(5, minmax(0, 1fr));
+                                    gap: 1.5rem;
+                                    width: 100%;
+                                    justify-content: center;
+                                }
+
+                                @@media (max-width: 1200px) {
+                                    .steam-character-row {
+                                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                                        gap: 2rem;
+                                    }
+                                }
+
+                                @@media (max-width: 768px) {
+                                    .steam-character-row {
+                                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                                        gap: 2rem;
+                                    }
+                                }
+
+                                @@media (max-width: 500px) {
+                                    .steam-character-row {
+                                        grid-template-columns: 1fr;
+                                    }
+                                }
+
+                                .steam-char-card {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    text-align: center;
+                                    gap: 0.75rem;
+                                    transition: transform 0.35s ease;
+                                }
+
+                                .steam-char-card:hover {
+                                    transform: translateY(-6px);
+                                }
+
+                                .circle-portrait-frame {
+                                    width: 180px;
+                                    height: 180px;
+                                    border-radius: 50%;
+                                    position: relative;
+                                    padding: 5px;
+                                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+                                    transition: all 0.35s ease;
+                                }
+
+                                .portrait-img {
+                                    width: 100%;
+                                    height: 100%;
+                                    border-radius: 50%;
+                                    object-fit: cover;
+                                    display: block;
+                                    transition: transform 0.4s ease;
+                                }
+
+                                .steam-char-card:hover .portrait-img {
+                                    transform: scale(1.06);
+                                }
+
+                                .circle-border-glow {
+                                    position: absolute;
+                                    inset: 0;
+                                    border-radius: 50%;
+                                    pointer-events: none;
+                                    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.2);
+                                }
+
+                                .diamond-accent {
+                                    position: absolute;
+                                    top: 50%;
+                                    width: 8px;
+                                    height: 8px;
+                                    transform: translateY(-50%) rotate(45deg);
+                                    pointer-events: none;
+                                }
+
+                                .diamond-accent.left {
+                                    left: 2px;
+                                }
+
+                                .diamond-accent.right {
+                                    right: 2px;
+                                }
+
+                                .char-name {
+                                    font-family: var(--font-heading);
+                                    font-size: 1.35rem;
+                                    font-weight: 900;
+                                    letter-spacing: 0.08em;
+                                }
+
+                                .title-divider {
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    width: 60%;
+                                    height: 1px;
+                                    margin: 0.1rem 0;
+                                    position: relative;
+                                }
+
+                                .diamond-dot {
+                                    font-size: 0.65rem;
+                                }
+
+                                .char-badge {
+                                    font-family: var(--font-body);
+                                    font-size: 0.7rem;
+                                    font-weight: 700;
+                                    letter-spacing: 0.1em;
+                                    padding: 0.3rem 0.9rem;
+                                    border-radius: 20px;
+                                    text-transform: uppercase;
+                                    background: rgba(15, 23, 42, 0.8);
+                                }
+
+                                .char-description {
+                                    font-size: 0.88rem;
+                                    color: #CBD5E1;
+                                    line-height: 1.5;
+                                    max-width: 220px;
+                                    margin-top: 0.25rem;
+                                }
+
+                                /* THEME COLOR VARIATIONS */
+
+                                .theme-prince .circle-portrait-frame {
+                                    border: 2px solid #38BDF8;
+                                    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+                                }
+
+                                .theme-prince .diamond-accent {
+                                    background: #38BDF8;
+                                    box-shadow: 0 0 8px #38BDF8;
+                                }
+
+                                .theme-prince .char-name,
+                                .theme-prince .diamond-dot {
+                                    color: #38BDF8;
+                                }
+
+                                .theme-prince .title-divider {
+                                    background: linear-gradient(90deg, transparent, #38BDF8, transparent);
+                                }
+
+                                .theme-prince .char-badge {
+                                    border: 1px solid #38BDF8;
+                                    color: #38BDF8;
+                                }
+
+                                .theme-princess .circle-portrait-frame {
+                                    border: 2px solid #F43F5E;
+                                    box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+                                }
+
+                                .theme-princess .diamond-accent {
+                                    background: #F43F5E;
+                                    box-shadow: 0 0 8px #F43F5E;
+                                }
+
+                                .theme-princess .char-name,
+                                .theme-princess .diamond-dot {
+                                    color: #F43F5E;
+                                }
+
+                                .theme-princess .title-divider {
+                                    background: linear-gradient(90deg, transparent, #F43F5E, transparent);
+                                }
+
+                                .theme-princess .char-badge {
+                                    border: 1px solid #F43F5E;
+                                    color: #F43F5E;
+                                }
+
+                                .theme-queen .circle-portrait-frame {
+                                    border: 2px solid #FACC15;
+                                    box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+                                }
+
+                                .theme-queen .diamond-accent {
+                                    background: #FACC15;
+                                    box-shadow: 0 0 8px #FACC15;
+                                }
+
+                                .theme-queen .char-name,
+                                .theme-queen .diamond-dot {
+                                    color: #FACC15;
+                                }
+
+                                .theme-queen .title-divider {
+                                    background: linear-gradient(90deg, transparent, #FACC15, transparent);
+                                }
+
+                                .theme-queen .char-badge {
+                                    border: 1px solid #FACC15;
+                                    color: #FACC15;
+                                }
+
+                                .theme-jack .circle-portrait-frame {
+                                    border: 2px solid #EF4444;
+                                    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+                                }
+
+                                .theme-jack .diamond-accent {
+                                    background: #EF4444;
+                                    box-shadow: 0 0 8px #EF4444;
+                                }
+
+                                .theme-jack .char-name,
+                                .theme-jack .diamond-dot {
+                                    color: #EF4444;
+                                }
+
+                                .theme-jack .title-divider {
+                                    background: linear-gradient(90deg, transparent, #EF4444, transparent);
+                                }
+
+                                .theme-jack .char-badge {
+                                    border: 1px solid #EF4444;
+                                    color: #EF4444;
+                                }
+
+                                .theme-king .circle-portrait-frame {
+                                    border: 2px solid #A855F7;
+                                    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+                                }
+
+                                .theme-king .diamond-accent {
+                                    background: #A855F7;
+                                    box-shadow: 0 0 8px #A855F7;
+                                }
+
+                                .theme-king .char-name,
+                                .theme-king .diamond-dot {
+                                    color: #A855F7;
+                                }
+
+                                .theme-king .title-divider {
+                                    background: linear-gradient(90deg, transparent, #A855F7, transparent);
+                                }
+
+                                .theme-king .char-badge {
+                                    border: 1px solid #A855F7;
+                                    color: #A855F7;
+                                }
+
+                                /* TIMELINE STYLING */
+                                .timeline-container {
+                                    display: grid;
+                                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                                    gap: 1.5rem;
+                                    margin-top: 2rem;
+                                }
+
+                                .timeline-item {
+                                    background: rgba(30, 41, 59, 0.8);
+                                    border: 1px solid var(--border-light);
+                                    border-radius: 16px;
+                                    padding: 1.5rem;
+                                    text-align: left;
+                                    position: relative;
+                                }
+
+                                .timeline-dot {
+                                    width: 36px;
+                                    height: 36px;
+                                    border-radius: 50%;
+                                    background: var(--accent-primary);
+                                    color: #0F172A;
+                                    font-weight: 900;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    margin-bottom: 1rem;
+                                    box-shadow: 0 0 15px var(--accent-glow);
+                                }
+
+                                .tech-stack-badges {
+                                    display: flex;
+                                    justify-content: center;
+                                    flex-wrap: wrap;
+                                    gap: 1rem;
+                                    margin-top: 2rem;
+                                }
+
+                                .tech-badge {
+                                    padding: 0.75rem 1.5rem;
+                                    font-weight: 600;
+                                    color: var(--accent-primary);
+                                }
+
+                                .landing-footer {
+                                    padding: 2.5rem;
+                                    border-top: 1px solid var(--border-light);
+                                    text-align: center;
+                                    background: rgba(15, 23, 42, 0.9);
+                                }
+                            </style>
+
+@code {
+    [Parameter] public EventCallback OnStart { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try { await AudioService.PlayTrackAsync("Home"); } catch { }
+        }
+    }
+
+    private async Task StartAdventure()
+    {
+        await JSRuntime.InvokeVoidAsync("console.log", "LandingPage.StartAdventure invoked");
+        try
+        {
+            await AudioService.PlayClickAsync();
+        }
+        catch { }
+
+        await OnStart.InvokeAsync();
+        await JSRuntime.InvokeVoidAsync("console.log", "LandingPage.OnStart invoked");
+    }
+
+    private async Task ScrollToStory()
+    {
+        try { await AudioService.PlayClickAsync(); } catch { }
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("storageHelper.scrollToElement", "story");
+        }
+        catch { }
+    }
+
+    private async Task OnScrollIndicatorKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            await ScrollToStory();
+        }
+    }
+}

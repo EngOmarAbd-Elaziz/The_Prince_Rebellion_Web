@@ -1,0 +1,174 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Models
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+
+@if ((GameEngine.CurrentPhase == GamePhase.Battle || GameEngine.CurrentPhase == GamePhase.KingBattle) && GameEngine.CurrentEnemy != null)
+{
+    <div class="battle-screen-wrapper">
+        <div class="battle-screen-card glass-panel animate-fade-in">
+
+            <div class="battle-header">
+                <h2 class="font-heading battle-header-title">
+                    Battle: @GameEngine.CurrentEnemy.Name
+                </h2>
+                @if (!string.IsNullOrEmpty(GameEngine.BattleMessage))
+                {
+                    <span class="battle-header-message">@GameEngine.BattleMessage</span>
+                }
+            </div>
+
+            <div class="battle-arena battle-arena--compact">
+                <div class="glass-card fighter-card">
+                    <div class="fighter-header">
+                        <span class="fighter-name" style="color: var(--accent-primary);">@GameEngine.Player.Name</span>
+                        <span class="fighter-tag">Hero</span>
+                    </div>
+                    <div>
+                        <div class="hud-label">
+                            <span>HP</span>
+                            <span>@GameEngine.Player.Health / @GameEngine.PlayerMaxHealth</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill fill-health" style="width: @(GetPlayerHealthPct())%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="hud-label">
+                            <span>Shield</span>
+                            <span>@GameEngine.Player.Shield</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill fill-shield" style="width: @(GetPlayerShieldPct())%;"></div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.88rem; color: var(--color-warning);">Ammo: @GameEngine.Player.Ammo</div>
+                </div>
+
+                <div class="vs-divider-badge">VS</div>
+
+                <div class="glass-card fighter-card" style="border-color: rgba(239, 68, 68, 0.4);">
+                    <div class="fighter-header">
+                        <span class="fighter-name" style="color: var(--color-danger);">@GameEngine.CurrentEnemy.Name</span>
+                        <span class="fighter-tag enemy-tag">Opponent</span>
+                    </div>
+                    <div>
+                        <div class="hud-label">
+                            <span>HP</span>
+                            <span>@Math.Max(0, GameEngine.CurrentEnemy.Health) / @GameEngine.EnemyMaxHealth</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill fill-enemy" style="width: @(GetEnemyHealthPct())%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (GameEngine.BattleLogs.Count > 0)
+            {
+                <div class="battle-logs-container">
+                    @for (int i = 0; i < GameEngine.BattleLogs.Count; i++)
+                    {
+                        bool isLatest = (i == GameEngine.BattleLogs.Count - 1);
+                        <div class="battle-log-entry @(isLatest ? "latest" : "")">
+                            @GameEngine.BattleLogs[i]
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="actions-grid">
+                <button class="btn-fantasy btn-warning"
+                        disabled="@(GameEngine.Player.Ammo <= 0)"
+                        @onclick="() => TakeTurn(1)"
+                        @onmouseenter="PlayHover">
+                    1. Use Gun (Ammo: @GameEngine.Player.Ammo)
+                </button>
+
+                <button class="btn-fantasy btn-danger"
+                        @onclick="() => TakeTurn(2)"
+                        @onmouseenter="PlayHover">
+                    2. Use Sword
+                </button>
+
+                <button class="btn-fantasy"
+                        @onclick="() => TakeTurn(3)"
+                        @onmouseenter="PlayHover">
+                    3. Defend
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    .fighter-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--accent-primary);
+        background: rgba(56, 189, 248, 0.12);
+        padding: 0.18rem 0.55rem;
+        border-radius: 8px;
+        text-transform: uppercase;
+    }
+
+    .enemy-tag {
+        color: var(--color-danger) !important;
+        background: rgba(239, 68, 68, 0.12) !important;
+    }
+
+    .vs-divider-badge {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        font-size: 1.1rem;
+        color: var(--color-danger);
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--color-danger);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        flex-shrink: 0;
+        align-self: center;
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += StateHasChanged;
+        _ = AudioService.PlayTrackAsync("Battle");
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+    }
+
+    private async Task PlayHover() => await AudioService.PlayHoverAsync();
+
+    private async Task TakeTurn(int action)
+    {
+        if (action == 1) await AudioService.PlayGunshotAsync();
+        else if (action == 2) await AudioService.PlaySwordSlashAsync();
+        else await AudioService.PlayShieldBlockAsync();
+        GameEngine.ExecuteCombatAction(action);
+    }
+
+    private int GetPlayerHealthPct() =>
+        GameEngine.PlayerMaxHealth <= 0 ? 0 :
+        Math.Clamp((GameEngine.Player.Health * 100) / GameEngine.PlayerMaxHealth, 0, 100);
+
+    private int GetPlayerShieldPct() =>
+        Math.Clamp((GameEngine.Player.Shield * 100) / 200, 0, 100);
+
+    private int GetEnemyHealthPct() =>
+        (GameEngine.EnemyMaxHealth <= 0 || GameEngine.CurrentEnemy == null) ? 0 :
+        Math.Clamp((GameEngine.CurrentEnemy.Health * 100) / GameEngine.EnemyMaxHealth, 0, 100);
+}

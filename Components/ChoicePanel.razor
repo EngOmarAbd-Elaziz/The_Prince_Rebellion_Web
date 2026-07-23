@@ -1,0 +1,208 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+
+@if (GameEngine.CurrentPhase == GamePhase.HandcuffChoice)
+{
+    <div class="vn-choice-container animate-fade-in">
+        <div class="glass-panel vn-choice-card-wrapper">
+            <h3 class="font-heading vn-choice-heading">
+                <SvgIcon Name="codex" Size="1.4rem" Color="var(--accent-primary)" /> Handcuff Dilemma
+            </h3>
+            <p class="vn-choice-lead">
+                You are chained in iron with a stranger. What will you do?
+            </p>
+            
+            <div class="choice-cards-grid">
+                <button class="choice-interactive-card theme-cyan" 
+                        @onclick="() => SelectHandcuff(1)"
+                        @onmouseenter="PlayHover">
+                    <span class="choice-icon">
+                        <SvgIcon Name="codex" Size="1.8rem" Color="#38BDF8" />
+                    </span>
+                    <div class="choice-text-group">
+                        <span class="choice-title">1. Talk to him</span>
+                        <span class="choice-sub">Attempt to cooperate and reason</span>
+                    </div>
+                </button>
+
+                <button class="choice-interactive-card theme-amber" 
+                        @onclick="() => SelectHandcuff(2)"
+                        @onmouseenter="PlayHover">
+                    <span class="choice-icon">
+                        <SvgIcon Name="sword" Size="1.8rem" Color="#F59E0B" />
+                    </span>
+                    <div class="choice-text-group">
+                        <span class="choice-title">2. Try to remove handcuffs</span>
+                        <span class="choice-sub">Use force to break free</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else if (GameEngine.CurrentPhase == GamePhase.ShipNavigation)
+{
+    <div class="vn-choice-container animate-fade-in">
+        <div class="glass-panel vn-choice-card-wrapper">
+            <div class="vn-choice-header">
+                <h3 class="font-heading vn-choice-heading">
+                    <SvgIcon Name="event" Size="1.3rem" Color="var(--accent-primary)" /> Ship Deck Exploration
+                </h3>
+                <span class="room-tag">
+                    Room #@(GameEngine.RoomNumber + 1)
+                </span>
+            </div>
+            
+            <p class="vn-choice-lead">
+                You stand before room-@(GameEngine.RoomNumber + 1) on the prison ship. Choose your path:
+            </p>
+
+            <div class="choice-cards-grid">
+                <button class="choice-interactive-card theme-crimson" 
+                        @onclick="() => ChooseAction(1)"
+                        @onmouseenter="PlayHover">
+                    <span class="choice-icon">
+                        <SvgIcon Name="crown" Size="1.8rem" Color="#EF4444" />
+                    </span>
+                    <div class="choice-text-group">
+                        <span class="choice-title">1. Go to the roof of the ship</span>
+                        <span class="choice-sub">Confront the Captain (Requires all prisoners saved)</span>
+                    </div>
+                </button>
+
+                <button class="choice-interactive-card theme-cyan" 
+                        @onclick="() => ChooseAction(2)"
+                        @onmouseenter="PlayHover">
+                    <span class="choice-icon">
+                        <SvgIcon Name="home" Size="1.8rem" Color="#38BDF8" />
+                    </span>
+                    <div class="choice-text-group">
+                        <span class="choice-title">2. Enter The Room</span>
+                        <span class="choice-sub">Investigate room for loot, guards, or prisoners</span>
+                    </div>
+                </button>
+
+                <button class="choice-interactive-card theme-gray" 
+                        @onclick="() => ChooseAction(3)"
+                        @onmouseenter="PlayHover">
+                    <span class="choice-icon">
+                        <SvgIcon Name="arrow-right" Size="1.8rem" Color="#CBD5E1" />
+                    </span>
+                    <div class="choice-text-group">
+                        <span class="choice-title">3. Skip the room</span>
+                        <span class="choice-sub">Bypass room and move to next sector</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .room-tag {
+        background: rgba(56, 189, 248, 0.15);
+        color: var(--accent-primary);
+        border: 1px solid var(--border-glow);
+        padding: 0.3rem 0.85rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .choice-interactive-card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+        color: var(--text-main);
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .choice-interactive-card:hover {
+        transform: scale(1.02) translateY(-1px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .choice-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .choice-text-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 0;
+    }
+
+    .choice-title {
+        font-family: var(--font-heading);
+        font-size: 1.05rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .choice-sub {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        line-height: 1.35;
+    }
+
+    .theme-cyan { border-color: rgba(56, 189, 248, 0.3); }
+    .theme-cyan:hover { border-color: #38BDF8; background: rgba(56, 189, 248, 0.15); box-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+    .theme-cyan .choice-title { color: #38BDF8; }
+
+    .theme-amber { border-color: rgba(245, 158, 11, 0.3); }
+    .theme-amber:hover { border-color: #F59E0B; background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+    .theme-amber .choice-title { color: #F59E0B; }
+
+    .theme-crimson { border-color: rgba(239, 68, 68, 0.4); }
+    .theme-crimson:hover { border-color: #EF4444; background: rgba(239, 68, 68, 0.15); box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+    .theme-crimson .choice-title { color: #EF4444; }
+
+    .theme-gray { border-color: rgba(148, 163, 184, 0.3); }
+    .theme-gray:hover { border-color: #CBD5E1; background: rgba(148, 163, 184, 0.15); }
+    .theme-gray .choice-title { color: #CBD5E1; }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+    }
+
+    private async Task PlayHover()
+    {
+        await AudioService.PlayHoverAsync();
+    }
+
+    private async Task SelectHandcuff(int option)
+    {
+        await AudioService.PlayClickAsync();
+        GameEngine.SelectHandcuffOption(option);
+    }
+
+    private async Task ChooseAction(int action)
+    {
+        await AudioService.PlayClickAsync();
+        GameEngine.ChooseRoomAction(action);
+    }
+}

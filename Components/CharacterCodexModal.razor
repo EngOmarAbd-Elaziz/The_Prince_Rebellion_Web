@@ -1,0 +1,147 @@
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject AudioService AudioService
+@implements IDisposable
+
+<div class="modal-backdrop animate-fade-in" @onclick="Close">
+    <!-- GAME PAUSED Banner Indicator -->
+    <div class="pause-banner-wrapper">
+        <div class="pause-banner">
+            <span><SvgIcon Name="pause" Size="1rem" Color="var(--color-warning)" /> GAME PAUSED</span>
+        </div>
+    </div>
+
+    <!-- Character Codex Grimoire Window - Magical Scale Animation -->
+    <div class="glass-panel modal-content-card anim-grimoire" style="max-width: 750px; max-height: 85vh; display: flex; flex-direction: column;" @onclick:stopPropagation="true">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h2 class="font-heading" style="color: var(--accent-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <SvgIcon Name="codex" Size="1.4rem" Color="var(--accent-primary)" /> Character Codex & Lore
+            </h2>
+            <button class="btn-quick-icon" @onclick="Close">
+                <SvgIcon Name="close" Size="1.1rem" />
+            </button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; padding: 1rem 0; text-align: left;">
+            
+            <div class="glass-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="crown" Size="2rem" Color="var(--accent-primary)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary);">@GameEngine.Player.Name</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Protagonist Hero</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">The brave protagonist determined to overthrow their tyrannical father and free the town from injustice.</div>
+            </div>
+
+            <div class="glass-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="crown" Size="2rem" Color="var(--color-warning)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary);">Queen</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Mother</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">Warned the hero of the grave danger of rising up against the King.</div>
+            </div>
+
+            <div class="glass-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="anchor" Size="2rem" Color="var(--color-danger)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary);">Jack</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Ally / Prisoner</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">Chained alongside the hero on the transport vessel; cooperated to break the chains.</div>
+            </div>
+
+            <div class="glass-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="potion" Size="2rem" Color="var(--color-warning)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary);">The Seller</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Hideout Contact</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">Guards the entrance to the rebel hideout using the "Dragon Fruit" secret password.</div>
+            </div>
+
+            <div class="glass-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="shield" Size="2rem" Color="var(--accent-primary)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--accent-primary);">Ash, Loge & Tom</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Rebellion Group</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">Key members of the underground campaign waiting in the hideout.</div>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.4);">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <SvgIcon Name="skull" Size="2rem" Color="var(--color-danger)" />
+                    <div>
+                        <div style="font-family: var(--font-heading); font-weight: 700; color: var(--color-danger);">King's Assistant</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Traitor</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.5rem;">Betrayed the campaign group by bringing the King's soldiers directly to the bunker.</div>
+            </div>
+
+        </div>
+
+        <button class="btn-fantasy" style="width: 100%; margin-top: 0.5rem;" @onclick="Close">Resume Game</button>
+    </div>
+</div>
+
+<style>
+    .pause-banner-wrapper {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10005;
+        pointer-events: none;
+    }
+
+    .pause-banner {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--color-warning);
+        border-radius: 20px;
+        padding: 0.4rem 1.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--color-warning);
+        letter-spacing: 0.1em;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        GameEngine.PauseGame();
+        await AudioService.PlayModalOpenAsync();
+    }
+
+    public void Dispose()
+    {
+        GameEngine.ResumeGame();
+    }
+
+    private async Task Close()
+    {
+        await AudioService.PlayModalCloseAsync();
+        GameEngine.ResumeGame();
+        await OnClose.InvokeAsync();
+    }
+}

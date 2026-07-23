@@ -1,0 +1,78 @@
+@using AdventureGameWeb.Services
+@inject AudioService AudioService
+@inject UiStateService UiState
+
+<div class="quick-menu-bar">
+    <button class="btn-quick-icon" title="Arsenal & Inventory" @onclick='() => OpenModal("inventory")'>
+        <SvgIcon Name="inventory" Size="1rem" Color="var(--accent-primary)" />
+        <span class="quick-menu-label">Arsenal</span>
+    </button>
+    <button class="btn-quick-icon" title="Story Journal" @onclick='() => OpenModal("journal")'>
+        <SvgIcon Name="journal" Size="1rem" Color="var(--accent-primary)" />
+        <span class="quick-menu-label">Journal</span>
+    </button>
+    <button class="btn-quick-icon" title="Monsters Bestiary" @onclick='() => OpenModal("bestiary")'>
+        <SvgIcon Name="skull" Size="1rem" Color="var(--color-warning)" />
+        <span class="quick-menu-label">Bestiary</span>
+    </button>
+    <button class="btn-quick-icon" title="Kingdom Codex" @onclick='() => OpenModal("codex")'>
+        <SvgIcon Name="codex" Size="1rem" Color="var(--accent-primary)" />
+        <span class="quick-menu-label">Codex</span>
+    </button>
+    <button class="btn-quick-icon" title="Rebellion Badges" @onclick='() => OpenModal("achievements")'>
+        <SvgIcon Name="crown" Size="1rem" Color="var(--color-warning)" />
+        <span class="quick-menu-label">Badges</span>
+    </button>
+    <button class="btn-quick-icon" title="System Settings" @onclick='() => OpenModal("settings")'>
+        <SvgIcon Name="settings" Size="1rem" Color="var(--text-muted)" />
+        <span class="quick-menu-label">Settings</span>
+    </button>
+</div>
+
+<style>
+    .quick-menu-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid var(--border-glow);
+        border-radius: 14px;
+        padding: 0.3rem 0.6rem;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-quick-icon {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid var(--border-light);
+        color: var(--text-main);
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        padding: 0.4rem 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 40px;
+    }
+
+    .btn-quick-icon:hover {
+        background: rgba(56, 189, 248, 0.18);
+        border-color: var(--border-glow);
+        color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    }
+</style>
+
+@code {
+    private async Task OpenModal(string modalName)
+    {
+        await AudioService.PlayClickAsync();
+        UiState.OpenModal(modalName);
+    }
+}

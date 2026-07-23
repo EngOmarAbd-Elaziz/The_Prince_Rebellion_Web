@@ -1,0 +1,121 @@
+@page "/"
+@using AdventureGameWeb.Engine
+@using AdventureGameWeb.Components
+@using AdventureGameWeb.Services
+@inject IGameEngineService GameEngine
+@inject IJSRuntime JSRuntime
+@inject UiStateService UiState
+@implements IDisposable
+
+<PageTitle>The Prince's Rebellion</PageTitle>
+
+@if (UiState.IsLandingPage)
+{
+    <LandingPage OnStart="StartGameFromLanding" />
+}
+else if (showCharacterCreation)
+{
+    <CharacterSelectionModal OnConfirmed="HandleCharacterConfirmed" OnClose="ReturnToLauncher" />
+}
+else
+{
+    <div class="game-phase-container @GetPhaseContainerClass()">
+        @switch (GameEngine.CurrentPhase)
+        {
+            case GamePhase.NameInput:
+                <CharacterSelectionModal OnConfirmed="HandleCharacterConfirmed" OnClose="ReturnToLauncher" />
+                break;
+
+            case GamePhase.IntroStory:
+            case GamePhase.PostHandcuffStory:
+            case GamePhase.PostCaptainStory:
+                <DialoguePanel />
+                break;
+
+            case GamePhase.HandcuffChoice:
+            case GamePhase.ShipNavigation:
+                <ChoicePanel />
+                break;
+
+            case GamePhase.EventNotification:
+                <EventCard />
+                break;
+
+            case GamePhase.Battle:
+            case GamePhase.KingBattle:
+                <BattleScreen />
+                break;
+
+            case GamePhase.GameOver:
+                <GameOverModal />
+                break;
+
+            case GamePhase.Victory:
+                <VictoryModal />
+                <CreditsOverlay />
+                break;
+        }
+    </div>
+}
+
+@code {
+    private bool showCharacterCreation = false;
+
+    protected override void OnInitialized()
+    {
+        GameEngine.OnChange += StateHasChanged;
+        UiState.OnChange += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("completeCinematicLoading");
+            }
+            catch { }
+        }
+    }
+
+    public void Dispose()
+    {
+        GameEngine.OnChange -= StateHasChanged;
+        UiState.OnChange -= StateHasChanged;
+    }
+
+    private async Task StartGameFromLanding()
+    {
+        // SetLandingPage(false) fires UiState.OnChange → both MainLayout and Index re-render
+        // showCharacterCreation must be set BEFORE that so Index renders the modal correctly
+        showCharacterCreation = true;
+        UiState.SetLandingPage(false);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleCharacterConfirmed()
+    {
+        showCharacterCreation = false;
+        UiState.SetLandingPage(false);
+        StateHasChanged();
+    }
+
+    public void ReturnToLauncher()
+    {
+        showCharacterCreation = false;
+        UiState.SetLandingPage(true);
+        StateHasChanged();
+    }
+
+    private string GetPhaseContainerClass() => GameEngine.CurrentPhase switch
+    {
+        GamePhase.IntroStory or GamePhase.PostHandcuffStory or GamePhase.PostCaptainStory
+            => "game-phase-container--overlay game-phase-container--dialogue",
+        GamePhase.HandcuffChoice or GamePhase.ShipNavigation
+            => "game-phase-container--overlay",
+        GamePhase.EventNotification
+            => "game-phase-container--overlay",
+        _ => string.Empty
+    };
+}
