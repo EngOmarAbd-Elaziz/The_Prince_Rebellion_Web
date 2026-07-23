@@ -3,10 +3,10 @@
 @inject ScoreService ScoreService
 @inject PlayerSessionService PlayerSession
 @inject AudioService AudioService
+@inject SupabaseLeaderboardService SupabaseService
 
 <div class="modal-backdrop animate-fade-in leaderboard-backdrop" @onclick="Close">
-    <div class="glass-panel modal-content-card anim-drop-top leaderboard-modal"
-         @onclick:stopPropagation="true">
+    <div class="glass-panel modal-content-card anim-drop-top leaderboard-modal" @onclick:stopPropagation="true">
 
         <!-- Header -->
         <div class="leaderboard-header">
@@ -74,88 +74,89 @@
                 </div>
                 @if (string.IsNullOrWhiteSpace(_currentUsername))
                 {
-                    <p class="player-dashboard-hint">Enter a player name when starting a game to track your scores on the leaderboard.</p>
-                }
-            </div>
-
-            @if (_entries.Count == 0)
-            {
-                <div class="leaderboard-empty">
-                    <p class="leaderboard-empty-icon">🏆</p>
-                    <p>No champions yet. Be the first to conquer the rebellion!</p>
-                </div>
-            }
-            else
-            {
-                <!-- Desktop / tablet table -->
-                <div class="leaderboard-table-wrap hide-mobile-table">
-                    <table class="leaderboard-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Player</th>
-                                <th>High Score</th>
-                                <th>Last Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < _entries.Count; i++)
-                            {
-                                var entry = _entries[i];
-                                var rank = i + 1;
-                                var isCurrentPlayer = IsCurrentPlayer(entry);
-                                <tr class="leaderboard-row @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-row--you" : "")">
-                                    <td class="leaderboard-rank">@GetRankIcon(rank)</td>
-                                    <td>
-                                        <span class="leaderboard-player-name">
-                                            @entry.Username
-                                            @if (isCurrentPlayer)
-                                            {
-                                                <span class="leaderboard-you-badge">YOU</span>
-                                            }
-                                        </span>
-                                    </td>
-                                    <td class="leaderboard-score">@entry.HighScore</td>
-                                    <td class="leaderboard-time">@FormatLastUpdated(entry.LastUpdated)</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Mobile card list -->
-                <div class="leaderboard-cards show-mobile-table">
-                    @for (int i = 0; i < _entries.Count; i++)
-                    {
-                        var entry = _entries[i];
-                        var rank = i + 1;
-                        var isCurrentPlayer = IsCurrentPlayer(entry);
-                        <div class="leaderboard-card @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-card--you" : "")">
-                            <div class="leaderboard-card-top">
-                                <span class="leaderboard-rank">@GetRankIcon(rank)</span>
-                                <div class="leaderboard-card-player">
-                                    <span class="leaderboard-player-name">@entry.Username</span>
-                                    @if (isCurrentPlayer)
-                                    {
-                                        <span class="leaderboard-you-badge">YOU</span>
-                                    }
-                                </div>
-                                <span class="leaderboard-score">@entry.HighScore</span>
-                            </div>
-                            <div class="leaderboard-card-meta">
-                                <span>Updated @FormatLastUpdated(entry.LastUpdated)</span>
-                            </div>
-                        </div>
+                    <p class="player-dashboard-hint">Enter a player name when starting a game to track your scores on the
+                        leaderboard.</p>
                     }
                 </div>
 
-                <p class="leaderboard-footer-note">
-                    Top 10 unique players ranked by highest score (descending)
-                </p>
+                @if (_entries.Count == 0)
+                {
+                    <div class="leaderboard-empty">
+                        <p class="leaderboard-empty-icon">🏆</p>
+                        <p>No champions yet. Be the first to conquer the rebellion!</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Desktop / tablet table -->
+                    <div class="leaderboard-table-wrap hide-mobile-table">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Player</th>
+                                    <th>High Score</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < _entries.Count; i++)
+                                {
+                                    var entry = _entries[i];
+                                    var rank = i + 1;
+                                    var isCurrentPlayer = IsCurrentPlayer(entry);
+                                    <tr class="leaderboard-row @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-row--you" : "")">
+                                        <td class="leaderboard-rank">@GetRankIcon(rank)</td>
+                                        <td>
+                                            <span class="leaderboard-player-name">
+                                                @entry.Username
+                                                @if (isCurrentPlayer)
+                                                {
+                                                    <span class="leaderboard-you-badge">YOU</span>
+                                                }
+                                            </span>
+                                        </td>
+                                        <td class="leaderboard-score">@entry.HighScore</td>
+                                        <td class="leaderboard-time">@FormatLastUpdated(entry.LastUpdated)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile card list -->
+                    <div class="leaderboard-cards show-mobile-table">
+                        @for (int i = 0; i < _entries.Count; i++)
+                        {
+                            var entry = _entries[i];
+                            var rank = i + 1;
+                            var isCurrentPlayer = IsCurrentPlayer(entry);
+                            <div class="leaderboard-card @GetRankClass(rank) @(isCurrentPlayer ? "leaderboard-card--you" : "")">
+                                <div class="leaderboard-card-top">
+                                    <span class="leaderboard-rank">@GetRankIcon(rank)</span>
+                                    <div class="leaderboard-card-player">
+                                        <span class="leaderboard-player-name">@entry.Username</span>
+                                        @if (isCurrentPlayer)
+                                        {
+                                            <span class="leaderboard-you-badge">YOU</span>
+                                        }
+                                    </div>
+                                    <span class="leaderboard-score">@entry.HighScore</span>
+                                </div>
+                                <div class="leaderboard-card-meta">
+                                    <span>Updated @FormatLastUpdated(entry.LastUpdated)</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <p class="leaderboard-footer-note">
+                        Top 10 unique players ranked by highest score (descending)
+                    </p>
+                }
             }
-        }
+        </div>
     </div>
-</div>
 
 @code {
     [Parameter] public EventCallback OnClose { get; set; }
@@ -181,23 +182,38 @@
         try
         {
             _currentUsername = await PlayerSession.GetCurrentUsernameAsync();
-            _entries = await ScoreService.GetTop10ScoresAsync();
 
+            // 1. جلب البيانات العالمية من Supabase بدلاً من LocalStorage
+            var globalEntries = await SupabaseService.GetTopLeaderboardAsync(10);
+
+            // 2. تحويل LeaderboardEntry القادمة من Supabase إلى UserScore ليتناسب مع الـ UI
+            _entries = globalEntries.Select(e => new UserScore
+            {
+                Username = e.Username,
+                HighScore = e.Score,
+                LastUpdated = e.CreatedAt.GetValueOrDefault(DateTime.MinValue)
+            }).ToList();
+
+            // 3. جلب بروفايل اللاعب الحالي من LocalStorage
             var profile = await PlayerSession.GetCurrentPlayerScoreAsync();
             _playerProfile = profile ?? ScoreService.CreateEmptyProfile(_currentUsername);
 
+            // 4. تحديد ترتيب اللاعب الحالي بناءً على قائمة Supabase العالمية
             if (!string.IsNullOrWhiteSpace(_currentUsername))
             {
                 var rankIndex = _entries.FindIndex(e =>
                     string.Equals(e.Username, _currentUsername, StringComparison.OrdinalIgnoreCase));
+
                 if (rankIndex >= 0)
                 {
                     _playerRank = rankIndex + 1;
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // Fallback في حالة وجود خطأ في الاتصال بـ Supabase
+            Console.WriteLine($"Error fetching global leaderboard: {ex.Message}");
             _entries = new List<UserScore>();
             _playerProfile = ScoreService.CreateEmptyProfile(_currentUsername);
         }
