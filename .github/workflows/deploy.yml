@@ -19,11 +19,10 @@ jobs:
     - name: Publish Blazor App
       run: dotnet publish AdventureGameWeb/AdventureGameWeb.csproj -c Release -o release/wwwroot
 
-    - name: Install & Deploy to Vercel
+    - name: Deploy to Vercel
       env:
         VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       run: |
-        npx vercel@latest pull --yes --environment=production --token=$VERCEL_TOKEN
-        npx vercel@latest deploy --prebuilt --prod --token=$VERCEL_TOKEN
+        npx vercel@latest release/wwwroot --prod --yes --token=$VERCEL_TOKEN
