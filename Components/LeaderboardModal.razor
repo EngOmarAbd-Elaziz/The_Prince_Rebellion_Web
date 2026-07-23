@@ -183,10 +183,10 @@
         {
             _currentUsername = await PlayerSession.GetCurrentUsernameAsync();
 
-            // 1. جلب البيانات العالمية من Supabase بدلاً من LocalStorage
+            // 1. جلب البيانات العالمية من Supabase (أعلى 10 لاعبين)
             var globalEntries = await SupabaseService.GetTopLeaderboardAsync(10);
 
-            // 2. تحويل LeaderboardEntry القادمة من Supabase إلى UserScore ليتناسب مع الـ UI
+            // 2. تحويل البيانات للعرض
             _entries = globalEntries.Select(e => new UserScore
             {
                 Username = e.Username,
@@ -194,25 +194,54 @@
                 LastUpdated = e.CreatedAt.GetValueOrDefault(DateTime.MinValue)
             }).ToList();
 
-            // 3. جلب بروفايل اللاعب الحالي من LocalStorage
-            var profile = await PlayerSession.GetCurrentPlayerScoreAsync();
-            _playerProfile = profile ?? ScoreService.CreateEmptyProfile(_currentUsername);
-
-            // 4. تحديد ترتيب اللاعب الحالي بناءً على قائمة Supabase العالمية
+            // 3. تحديث بروفايل اللاعب بناءً على بيانات Supabase وليست المحلية فقط
             if (!string.IsNullOrWhiteSpace(_currentUsername))
             {
+                // البحث عن اللاعب في القائمة العالمية
+                var myGlobalEntry = _entries.FirstOrDefault(e =>
+                    string.Equals(e.Username, _currentUsername, StringComparison.OrdinalIgnoreCase));
+
                 var rankIndex = _entries.FindIndex(e =>
                     string.Equals(e.Username, _currentUsername, StringComparison.OrdinalIgnoreCase));
 
-                if (rankIndex >= 0)
+                if (myGlobalEntry != null)
                 {
+                    // إذا كان اللاعب في الـ Top 10 نعرض بياناته الحقيقية من Supabase
+                    _playerProfile = new UserScore
+                    {
+                        Username = myGlobalEntry.Username,
+                        HighScore = myGlobalEntry.HighScore,
+                        LastUpdated = myGlobalEntry.LastUpdated
+                    };
                     _playerRank = rankIndex + 1;
                 }
+                else
+                {
+                    // إذا لم يكن في الـ Top 10، نحاول جلب أعلى سكور له من Supabase أو الـ LocalStorage كـ Fallback
+                    var supabaseUserEntry = await SupabaseService.GetEntryByUsernameAsync(_currentUsername);
+                    if (supabaseUserEntry != null)
+                    {
+                        _playerProfile = new UserScore
+                        {
+                            Username = supabaseUserEntry.Username,
+                            HighScore = supabaseUserEntry.Score,
+                            LastUpdated = supabaseUserEntry.CreatedAt.GetValueOrDefault(DateTime.MinValue)
+                        };
+                    }
+                    else
+                    {
+                        var profile = await PlayerSession.GetCurrentPlayerScoreAsync();
+                        _playerProfile = profile ?? ScoreService.CreateEmptyProfile(_currentUsername);
+                    }
+                }
+            }
+            else
+            {
+                _playerProfile = ScoreService.CreateEmptyProfile(string.Empty);
             }
         }
         catch (Exception ex)
         {
-            // Fallback في حالة وجود خطأ في الاتصال بـ Supabase
             Console.WriteLine($"Error fetching global leaderboard: {ex.Message}");
             _entries = new List<UserScore>();
             _playerProfile = ScoreService.CreateEmptyProfile(_currentUsername);
@@ -223,7 +252,6 @@
             await InvokeAsync(StateHasChanged);
         }
     }
-
     private async Task Refresh()
     {
         await AudioService.PlayClickAsync();
