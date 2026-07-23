@@ -9,22 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x' # أو النسخة اللي بتستخدمها 8.0.x / 9.0.x
+        dotnet-version: '9.0.x'
 
     - name: Publish Blazor App
-      run: dotnet publish AdventureGameWeb.csproj -c Release -o release/wwwroot
-      # ملاحظة: غير AdventureGameWeb/AdventureGameWeb.csproj لمسار فايل الـ csproj عندك بالضبط
+      run: dotnet publish AdventureGameWeb/AdventureGameWeb.csproj -c Release -o release/wwwroot
 
-    - name: Deploy to Vercel
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./release/wwwroot
-        vercel-args: '--prod'
+    - name: Install & Deploy to Vercel
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      run: |
+        npx vercel@latest pull --yes --environment=production --token=$VERCEL_TOKEN
+        npx vercel@latest deploy --prebuilt --prod --token=$VERCEL_TOKEN
