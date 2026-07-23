@@ -35,43 +35,11 @@ namespace AdventureGameWeb.Services
 
         public async Task<List<LeaderboardEntry>> GetTopLeaderboardAsync(int limit = 10)
         {
-            if (!IsConfigured)
-            {
-                // Merge mock leaderboard with any locally saved scores
-                try
-                {
-                    var mock = GetMockLeaderboard();
-                    var json = await _localStorage.GetItemAsync(LOCAL_LEADERBOARD_KEY);
-                    if (!string.IsNullOrWhiteSpace(json))
-                    {
-                        var local = JsonSerializer.Deserialize<List<LeaderboardEntry>>(json);
-                        if (local != null && local.Count > 0)
-                        {
-                            // merge by username, keep best per username then combine
-                            var dict = new Dictionary<string, LeaderboardEntry>(StringComparer.OrdinalIgnoreCase);
-                            foreach (var e in mock)
-                            {
-                                var k = string.IsNullOrWhiteSpace(e.Username) ? Guid.NewGuid().ToString() : e.Username!;
-                                dict[k] = e;
-                            }
-                            foreach (var e in local)
-                            {
-                                var k = string.IsNullOrWhiteSpace(e.Username) ? Guid.NewGuid().ToString() : e.Username!;
-                                dict[k] = MergeEntries(dict.ContainsKey(k) ? dict[k] : null, e);
-                            }
-                            var merged = new List<LeaderboardEntry>(dict.Values);
-                            merged.Sort((a, b) => b.Score.CompareTo(a.Score));
-                            return merged.GetRange(0, Math.Min(limit, merged.Count));
-                        }
-                    }
-                }
-                catch { }
-                return GetMockLeaderboard();
-            }
+            if (!IsConfigured) return await LoadLocalLeaderboardAsync(limit);
 
             try
             {
-                var requestUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?select=*&order=score.desc,play_time_seconds.asc,created_at.asc&limit={limit}";
+                var requestUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?select=*&order=score.desc&limit={limit}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
                 ConfigureHeaders(request);
@@ -85,88 +53,65 @@ namespace AdventureGameWeb.Services
                         return data;
                     }
                 }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[Supabase Fetch Error] Status: {response.StatusCode} - {err}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SupabaseLeaderboard] Error fetching scores: {ex.Message}");
+                Console.WriteLine($"[Supabase Leaderboard] Exception: {ex.Message}");
             }
 
-            var localFallback = await LoadLocalLeaderboardAsync(limit);
-            if (localFallback.Count > 0)
-            {
-                return localFallback;
-            }
-
-            return GetMockLeaderboard();
+            return await LoadLocalLeaderboardAsync(limit);
         }
 
         public async Task<bool> SubmitScoreAsync(LeaderboardEntry entry)
         {
-            if (!IsConfigured)
-            {
-                Console.WriteLine("[SupabaseLeaderboard] Supabase not configured yet. Saving score locally.");
-                return await SaveScoreLocallyAsync(entry);
-            }
+            if (!IsConfigured) return await SaveScoreLocallyAsync(entry);
 
             try
             {
-                // 1. فحص ما إذا كان اسم المستخدم موجود مسبقاً
+                // 1. فحص وجود اللاعب
                 var queryUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?username=eq.{Uri.EscapeDataString(entry.Username)}";
                 using var getReq = new HttpRequestMessage(HttpMethod.Get, queryUrl);
                 ConfigureHeaders(getReq);
-                var getResp = await _http.SendAsync(getReq);
 
+                var getResp = await _http.SendAsync(getReq);
                 if (getResp.IsSuccessStatusCode)
                 {
                     var existing = await getResp.Content.ReadFromJsonAsync<List<LeaderboardEntry>>();
                     if (existing != null && existing.Count > 0)
                     {
                         var existingEntry = existing[0];
-                        var shouldUpdate = false;
-
-                        if (entry.Score > existingEntry.Score) shouldUpdate = true;
-                        if (entry.IsVictory && !existingEntry.IsVictory) shouldUpdate = true;
-                        if (entry.AchievementsCount > existingEntry.AchievementsCount) shouldUpdate = true;
-                        if (entry.PlayTimeSeconds > 0 && existingEntry.PlayTimeSeconds > 0 && entry.PlayTimeSeconds < existingEntry.PlayTimeSeconds) shouldUpdate = true;
-
-                        if (shouldUpdate)
+                        if (entry.Score > existingEntry.Score)
                         {
                             var patchUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard?username=eq.{Uri.EscapeDataString(existingEntry.Username)}";
                             using var patchReq = new HttpRequestMessage(HttpMethod.Patch, patchUrl);
                             ConfigureHeaders(patchReq);
 
-                            var mergedScore = Math.Max(existingEntry.Score, entry.Score);
-                            var mergedPlayTime = (existingEntry.PlayTimeSeconds > 0 && entry.PlayTimeSeconds > 0) ? Math.Min(existingEntry.PlayTimeSeconds, entry.PlayTimeSeconds) : Math.Max(existingEntry.PlayTimeSeconds, entry.PlayTimeSeconds);
-                            var mergedAchievements = Math.Max(existingEntry.AchievementsCount, entry.AchievementsCount);
-                            var mergedVictory = existingEntry.IsVictory || entry.IsVictory;
-                            var characterClass = string.IsNullOrWhiteSpace(entry.CharacterClass) ? existingEntry.CharacterClass : entry.CharacterClass;
-
                             patchReq.Content = JsonContent.Create(new
                             {
-                                username = existingEntry.Username,
-                                character_class = characterClass,
-                                score = mergedScore,
-                                play_time_seconds = mergedPlayTime,
-                                achievements_count = mergedAchievements,
-                                is_victory = mergedVictory
+                                score = entry.Score,
+                                character_class = entry.CharacterClass,
+                                play_time_seconds = entry.PlayTimeSeconds,
+                                achievements_count = entry.AchievementsCount,
+                                is_victory = entry.IsVictory
                             });
 
                             var patchResp = await _http.SendAsync(patchReq);
-                            if (patchResp.IsSuccessStatusCode) return true;
+                            return patchResp.IsSuccessStatusCode;
                         }
-                        else
-                        {
-                            return true; // لا يوجد تحسين في السكور - تعتبر العملية ناجحة
-                        }
+                        return true;
                     }
                 }
 
-                // 2. إذا لم يكن المستخدم موجوداً، نضيف سجل جديد (بناء Anonymous Anonymous Object لتجنب إرسال id أو created_at)
+                // 2. لاعب جديد - إرسال الحقول المطلوبة فقط (بدون ID أو CreatedAt)
                 var requestUrl = $"{SupabaseUrl.TrimEnd('/')}/rest/v1/leaderboard";
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl);
                 ConfigureHeaders(request);
 
-                // 💡 إرسال الحقول المطلوب حفظها فقط وبدون id أو created_at
                 var payload = new
                 {
                     username = entry.Username,
@@ -178,24 +123,22 @@ namespace AdventureGameWeb.Services
                 };
 
                 request.Content = JsonContent.Create(payload);
-
                 var response = await _http.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[Supabase Error] Status: {response.StatusCode}, Details: {errBody}");
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[Supabase Insert Error] Status: {response.StatusCode} - {err}");
                 }
 
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SupabaseLeaderboard] Error submitting score: {ex.Message}");
+                Console.WriteLine($"[Supabase Submit Exception] {ex.Message}");
                 return false;
             }
-        }
-        // Save locally when Supabase not configured
+        }        // Save locally when Supabase not configured
         public async Task<bool> SaveScoreLocallyAsync(LeaderboardEntry entry)
         {
             try
