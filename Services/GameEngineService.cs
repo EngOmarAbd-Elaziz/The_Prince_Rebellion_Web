@@ -8,6 +8,8 @@ namespace AdventureGameWeb.Services
 {
     public class GameEngineService : IGameEngineService
     {
+        private readonly SupabaseLeaderboardService supabaseLeaderboardService;
+        private readonly ScoreService scoreService;
         private readonly Random rng = new Random();
         private readonly AudioService audioService;
         private readonly AchievementService achievementService;
@@ -42,11 +44,13 @@ namespace AdventureGameWeb.Services
         public IReadOnlyList<DialogueMessage> DialogueHistory => dialogueHistory.AsReadOnly();
         public IReadOnlyList<string> BattleLogs => battleLogs.AsReadOnly();
 
-        public GameEngineService(AudioService audioService, AchievementService achievementService, StatsService statsService)
+        public GameEngineService(AudioService audioService, AchievementService achievementService, StatsService statsService, SupabaseLeaderboardService supabaseLeaderboardService, ScoreService scoreService)
         {
             this.audioService = audioService;
             this.achievementService = achievementService;
             this.statsService = statsService;
+            this.supabaseLeaderboardService = supabaseLeaderboardService;
+            this.scoreService = scoreService;
 
             Player = new Player("Prince");
             InitializeEvents();
@@ -79,9 +83,9 @@ namespace AdventureGameWeb.Services
                 new RoomEvent
                 {
                     Description = "You found a treasure chest containing 50 coins and +10 HP.",
-                    ExecuteEvent = (p, engine) => 
-                    { 
-                        p.Coins += 50; 
+                    ExecuteEvent = (p, engine) =>
+                    {
+                        p.Coins += 50;
                         p.Health += 10;
                         statsService.RecordCoins(50);
                         achievementService.Unlock("treasure_hunter");
@@ -92,9 +96,9 @@ namespace AdventureGameWeb.Services
                 {
                     Description = "You found 5 prisoners and helped them escape.",
                     IsPrisonerEvent = true,
-                    ExecuteEvent = (p, engine) => 
-                    { 
-                        p.PrisonersRemaining = Math.Max(0, p.PrisonersRemaining - 5); 
+                    ExecuteEvent = (p, engine) =>
+                    {
+                        p.PrisonersRemaining = Math.Max(0, p.PrisonersRemaining - 5);
                         statsService.RecordPrisonersRescued(5);
                         achievementService.Unlock("freedom_fighter");
                         _ = audioService.PlayCoinAsync();
@@ -103,9 +107,9 @@ namespace AdventureGameWeb.Services
                 new RoomEvent
                 {
                     Description = "You found +5 ammo and +15 shield.",
-                    ExecuteEvent = (p, engine) => 
-                    { 
-                        p.Ammo += 5; 
+                    ExecuteEvent = (p, engine) =>
+                    {
+                        p.Ammo += 5;
                         p.Shield += 15;
                         _ = audioService.PlayShieldBlockAsync();
                     }
@@ -225,7 +229,7 @@ namespace AdventureGameWeb.Services
             {
                 CurrentDialogue = currentStorySequence[storyIndex];
                 dialogueHistory.Add(CurrentDialogue);
-                
+
                 // Update Scene Background based on story progression
                 if (storyIndex <= 8) CurrentSceneBackground = "PalaceBedroom";
                 else if (storyIndex <= 13) CurrentSceneBackground = "PalaceHall";
@@ -466,6 +470,8 @@ namespace AdventureGameWeb.Services
                 statsService.RecordBattleLost();
                 _ = audioService.PlayDefeatSoundAsync();
                 CurrentPhase = GamePhase.GameOver;
+
+                SubmitFinalScore(isVictory: false);
             }
             else if (!CurrentEnemy.IsAlive)
             {
@@ -482,6 +488,8 @@ namespace AdventureGameWeb.Services
                     achievementService.Unlock("king_slayer");
                     _ = audioService.PlayVictoryFanfareAsync();
                     CurrentPhase = GamePhase.Victory;
+
+                    SubmitFinalScore(isVictory: true);
                 }
                 else if (CurrentEnemy.Name == "Ship Captain")
                 {
@@ -616,5 +624,34 @@ namespace AdventureGameWeb.Services
             PlayerSwordMin = 20,
             PlayerSwordMax = 40
         };
+
+        private async void SubmitFinalScore(bool isVictory)
+        {
+            try
+            {
+                int finalScore = CalculateScore(isVictory);
+                string playerName = string.IsNullOrWhiteSpace(Player.Name) ? "Anonymous" : Player.Name;
+
+                var leaderboardEntry = new LeaderboardEntry
+                {
+                    Username = playerName,
+                    CharacterClass = Player.SelectedHero ?? "Prince",
+                    Score = finalScore,
+                    PlayTimeSeconds = PlayTimeSeconds,
+                    AchievementsCount = achievementService.Achievements.Count(a => a.IsUnlocked),
+                    IsVictory = isVictory
+                };
+
+                // 1. إرسال السكور لقاعدة بيانات Supabase العالمية
+                await supabaseLeaderboardService.SubmitScoreAsync(leaderboardEntry);
+
+                // 2. تحديث السكور محلياً في الـ LocalStorage
+                await scoreService.SaveOrUpdateScoreAsync(playerName, finalScore);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error submitting score: {ex.Message}");
+            }
+        }
     }
 }
