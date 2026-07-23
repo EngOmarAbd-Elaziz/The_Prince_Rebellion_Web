@@ -263,17 +263,5 @@ namespace AdventureGameWeb.Services
                 request.Headers.Add("Prefer", "return=minimal");
             }
         }
-
-        private List<LeaderboardEntry> GetMockLeaderboard()
-        {
-            return new List<LeaderboardEntry>
-            {
-                new LeaderboardEntry { Id = 1, Username = "Prince Omar", CharacterClass = "Royal Swordsman", Score = 780, PlayTimeSeconds = 340, AchievementsCount = 5, IsVictory = true },
-                new LeaderboardEntry { Id = 2, Username = "Shadow Blade", CharacterClass = "Shadow Assassin", Score = 650, PlayTimeSeconds = 290, AchievementsCount = 4, IsVictory = true },
-                new LeaderboardEntry { Id = 3, Username = "Iron Shield", CharacterClass = "Knight Commander", Score = 590, PlayTimeSeconds = 410, AchievementsCount = 3, IsVictory = true },
-                new LeaderboardEntry { Id = 4, Username = "Valiant Rebel", CharacterClass = "Royal Swordsman", Score = 420, PlayTimeSeconds = 210, AchievementsCount = 2, IsVictory = false },
-                new LeaderboardEntry { Id = 5, Username = "Mystic Mage", CharacterClass = "Arcane Sorcerer", Score = 380, PlayTimeSeconds = 180, AchievementsCount = 2, IsVictory = false }
-            };
-        }
     }
 }
