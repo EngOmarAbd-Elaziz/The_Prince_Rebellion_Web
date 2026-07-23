@@ -630,23 +630,27 @@ namespace AdventureGameWeb.Services
             try
             {
                 int finalScore = CalculateScore(isVictory);
-                string playerName = string.IsNullOrWhiteSpace(Player.Name) ? "Anonymous" : Player.Name;
+
+                // 1. التأكد من جلب الاسم الذي ادخله المستخدم في الشاشة الرئيسية
+                string actualPlayerName = !string.IsNullOrWhiteSpace(Player?.Name)
+                    ? Player.Name
+                    : (!string.IsNullOrWhiteSpace(UserName) ? UserName : "Anonymous");
 
                 var leaderboardEntry = new LeaderboardEntry
                 {
-                    Username = playerName,
-                    CharacterClass = Player.SelectedHero ?? "Prince",
+                    Username = actualPlayerName,                     // 👈 هنا الاسم الحقيقي للاعب
+                    CharacterClass = Player?.SelectedHero ?? "Prince", // 👈 هنا شخصية البطل (Prince / Princess)
                     Score = finalScore,
                     PlayTimeSeconds = PlayTimeSeconds,
                     AchievementsCount = achievementService.Achievements.Count(a => a.IsUnlocked),
                     IsVictory = isVictory
                 };
 
-                // 1. إرسال السكور لقاعدة بيانات Supabase العالمية
+                // 2. إرسال البيانات إلى Supabase
                 await supabaseLeaderboardService.SubmitScoreAsync(leaderboardEntry);
 
-                // 2. تحديث السكور محلياً في الـ LocalStorage
-                await scoreService.SaveOrUpdateScoreAsync(playerName, finalScore);
+                // 3. تحديث السكور محلياً
+                await scoreService.SaveOrUpdateScoreAsync(actualPlayerName, finalScore);
             }
             catch (Exception ex)
             {
