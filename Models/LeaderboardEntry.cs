@@ -15,7 +15,7 @@ namespace AdventureGameWeb.Models
         public string Username { get; set; } = "Anonymous";
 
         [JsonPropertyName("character_class")]
-        public string CharacterClass { get; set; } = "Prince";
+        public required string CharacterClass { get; set; }
 
         [JsonPropertyName("score")]
         public int Score { get; set; }

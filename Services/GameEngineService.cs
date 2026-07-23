@@ -140,7 +140,7 @@ namespace AdventureGameWeb.Services
 
         public void StartGame(string playerInputName, string heroType = "Prince")
         {
-            string name = string.IsNullOrWhiteSpace(playerInputName) ? heroType : playerInputName.Trim();
+            string name = playerInputName.Trim();
             Player = new Player(name) { SelectedHero = heroType };
             PlayerMaxHealth = 50;
             RoomNumber = 0;
